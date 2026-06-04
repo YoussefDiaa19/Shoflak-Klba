@@ -1,0 +1,42 @@
+workflows:
+  ionic-capacitor-android:
+    name: Ionic Capacitor Android
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      node: 22
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Build web app
+        script: npm run build
+      - name: Sync Capacitor
+        script: npx cap sync android
+      - name: Build Android
+        script: |
+          cd android
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+
+  ionic-capacitor-ios:
+    name: Ionic Capacitor iOS
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      node: 22
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Build web app
+        script: npm run build
+      - name: Sync Capacitor
+        script: npx cap sync ios
+      - name: Build iOS
+        script: |
+          cd ios/App
+          xcodebuild build -workspace App.xcworkspace -scheme App -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO
+    artifacts:
+      - ios/App/build/Build/Products/Debug-iphoneos/*.app
