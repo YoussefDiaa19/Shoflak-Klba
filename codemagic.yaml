@@ -41,6 +41,10 @@ workflows:
       - name: Build iOS
         script: |
           cd ios/App
-          xcodebuild build -workspace App.xcworkspace -scheme App -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO
+          xcodebuild build -workspace App.xcworkspace -scheme App -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO -derivedDataPath build
+          mkdir -p build/ios/Payload
+          cp -r build/Build/Products/Debug-iphoneos/App.app build/ios/Payload/
+          cd build/ios
+          zip -qr App.ipa Payload
     artifacts:
-      - ios/App/build/Build/Products/Debug-iphoneos/*.app
+      - $CM_BUILD_DIR/ios/App/build/ios/**/*.ipa
