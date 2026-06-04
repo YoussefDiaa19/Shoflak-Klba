@@ -45,6 +45,19 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.245649293558-jm3mhhde1e5o6h2ej0ca4t0mfkh8rs30</string>
+			</array>
+		</dict>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>This app requires access to your camera to capture photos for your pet profile and share images in chat rooms.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

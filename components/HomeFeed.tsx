@@ -297,7 +297,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
   const hasActiveFilters = filters.breed !== '' || filters.minAge > 1 || filters.maxAge < 30 || filters.gender !== 'Any' || activeCategory !== 'All' || filters.city !== '' || filters.area !== '';
 
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] min-h-screen">
+    <div className="bg-white dark:bg-[#1a1a1a] min-h-full">
       
       {isActive && pullProgress > 0 && (
         <div 
@@ -314,9 +314,9 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
 
       <div 
         ref={headerRef}
-        className={`fixed top-[env(safe-area-inset-top)] left-0 right-0 z-30 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-xl border-b border-gray-100/50 dark:border-zinc-800/50 transition-transform duration-300 ease-in-out will-change-transform`}
+        className={`fixed top-0 pt-[calc(env(safe-area-inset-top)+16px)] left-0 right-0 z-30 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-xl border-b border-gray-100/50 dark:border-zinc-800/50 transition-transform duration-300 ease-in-out will-change-transform`}
       >
-        <div className="px-5 pt-4 pb-2 space-y-4">
+        <div className="px-5 pb-2 space-y-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="bg-[#e2a05e] p-2 rounded-xl text-white shadow-lg shadow-[#e2a05e]/20 ml-2">
@@ -377,7 +377,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
         </div>
       </div>
 
-      <div className={`px-5 pt-[145px] pb-24 ${viewMode === 'list' ? 'space-y-6' : 'grid grid-cols-2 gap-4'}`}>
+      <div className={`px-5 pt-[calc(env(safe-area-inset-top)+145px)] pb-[calc(110px+env(safe-area-inset-bottom))] ${viewMode === 'list' ? 'space-y-6' : 'grid grid-cols-2 gap-4'}`}>
         {isLoading && pets.length === 0 ? (
           Array.from({ length: 6 }).map((_, i) => (
             <PetCardSkeleton key={i} mode={viewMode} />

@@ -1658,7 +1658,7 @@ const App: React.FC = () => {
     const setupPush = async () => {
       let permStatus = await PushNotifications.checkPermissions();
 
-      if (permStatus.receive === 'prompt') {
+      if (permStatus.receive !== 'granted') {
         permStatus = await PushNotifications.requestPermissions();
       }
 
