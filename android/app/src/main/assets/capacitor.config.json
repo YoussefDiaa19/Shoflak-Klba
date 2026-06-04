@@ -1,0 +1,38 @@
+{
+	"appId": "com.shoflakklba.app",
+	"appName": "Shoflak Klba",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "http",
+		"cleartext": true,
+		"allowNavigation": [
+			"*"
+		]
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 3000,
+			"launchAutoHide": false,
+			"backgroundColor": "#e2a05e",
+			"launchFadeOutDuration": 300,
+			"showSpinner": false,
+			"splashFullScreen": true,
+			"splashImmersive": true,
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP"
+		},
+		"PushNotifications": {
+			"presentationOptions": []
+		},
+		"GoogleAuth": {
+			"scopes": [
+				"profile",
+				"email"
+			],
+			"serverClientId": "245649293558-skjl5k1cb5q49slpav7agoleqdp9mlft.apps.googleusercontent.com",
+			"androidClientId": "245649293558-skjl5k1cb5q49slpav7agoleqdp9mlft.apps.googleusercontent.com",
+			"iosClientId": "245649293558-jm3mhhde1e5o6h2ej0ca4t0mfkh8rs30.apps.googleusercontent.com",
+			"forceCodeForRefreshToken": true
+		}
+	}
+}

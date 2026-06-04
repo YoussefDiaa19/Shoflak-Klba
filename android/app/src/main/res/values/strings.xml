@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Shoflak Klba</string>
+    <string name="title_activity_main">Shoflak Klba</string>
+    <string name="package_name">com.shoflakklba.app</string>
+    <string name="custom_url_scheme">com.shoflakklba.app</string>
+</resources>

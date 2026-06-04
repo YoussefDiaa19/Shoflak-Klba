@@ -1,0 +1,8 @@
+{
+  "name": "Shoflak Klba",
+  "description": "A premium pet mating and social platform to find the perfect partner for your pet. Features pet profiles, owner details, chatting, and advanced matching filters.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

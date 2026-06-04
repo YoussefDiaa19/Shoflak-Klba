@@ -1,0 +1,33 @@
+# Set default behavior for all text files (automatic line-ending normalization)
+* text=auto
+
+# Explicitly declare code, script, configuration, and data files as text
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.cjs text
+*.mjs text
+*.json text
+*.xml text
+*.css text
+*.html text
+*.sql text
+*.gradle text
+*.properties text
+*.xml text
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# Denote all media, image, and build binaries to ensure they are never modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.aar binary
+*.so binary
