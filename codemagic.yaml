@@ -10,6 +10,8 @@ workflows:
         script: npm install
       - name: Build web app
         script: npm run build
+      - name: Generate Assets
+        script: npx @capacitor/assets generate
       - name: Sync Capacitor
         script: npx cap sync android
       - name: Build Android
@@ -32,6 +34,8 @@ workflows:
         script: npm install
       - name: Build web app
         script: npm run build
+      - name: Generate Assets
+        script: npx @capacitor/assets generate
       - name: Sync Capacitor
         script: npx cap sync ios
       - name: Build iOS
