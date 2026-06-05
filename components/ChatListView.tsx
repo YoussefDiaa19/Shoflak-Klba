@@ -72,7 +72,7 @@ export const ChatListView: React.FC<ChatListViewProps> = ({ chats, pets, onChatS
   }, [searchQuery]);
 
   return (
-    <div className="px-5 pt-6 animate-in fade-in duration-500 min-h-screen bg-white dark:bg-[#1a1a1a]">
+    <div className="px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] animate-in fade-in duration-500 min-h-screen bg-white dark:bg-[#1a1a1a]">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">{t.messages}</h1>
       </div>
