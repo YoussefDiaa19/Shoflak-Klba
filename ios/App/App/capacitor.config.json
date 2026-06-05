@@ -17,7 +17,9 @@
 			"launchFadeOutDuration": 300,
 			"showSpinner": false,
 			"splashFullScreen": true,
-			"splashImmersive": true
+			"splashImmersive": true,
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP"
 		},
 		"PushNotifications": {
 			"presentationOptions": []
@@ -34,6 +36,7 @@
 		}
 	},
 	"packageClassList": [
+		"FCMPlugin",
 		"AppPlugin",
 		"CAPBrowserPlugin",
 		"FilesystemPlugin",

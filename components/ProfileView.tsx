@@ -676,7 +676,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className={`w-[80%] max-w-sm bg-white dark:bg-zinc-900 h-full p-8 shadow-2xl overflow-y-auto`}
             >
-              <div className="flex justify-between items-center mb-10">
+              <div className="flex justify-between items-center mb-10 pt-[env(safe-area-inset-top)]">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t.settings}</h2>
                 <button onClick={handleCloseMenu} className="p-2 text-gray-400 bg-transparent outline-none border-none active:scale-90 transition-transform"><X size={24} /></button>
               </div>
@@ -695,14 +695,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 </button>
                 
                 <div className="pt-2">
-                  <button onClick={() => openExternalLink('https://shoflakklba.vercel.app/privacy')} className="w-full flex items-center justify-between p-4 rounded-2xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-white transition-colors group">
+                  <button onClick={() => openExternalLink('https://www.shoflakklba.app/privacy')} className="w-full flex items-center justify-between p-4 rounded-2xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-white transition-colors group">
                     <div className="flex items-center gap-4">
                       <ShieldCheck size={20} className="text-black dark:text-white" />
                       <span className="font-bold">{t.privacyPolicy}</span>
                     </div>
                     <ChevronRight size={16} className="text-gray-300 group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button onClick={() => openExternalLink('https://shoflakklba.vercel.app/terms')} className="w-full flex items-center justify-between p-4 rounded-2xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-white transition-colors group">
+                  <button onClick={() => openExternalLink('https://www.shoflakklba.app/terms')} className="w-full flex items-center justify-between p-4 rounded-2xl bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-white transition-colors group">
                     <div className="flex items-center gap-4">
                       <FileText size={20} className="text-black dark:text-white" />
                       <span className="font-bold">{t.termsAndConditions}</span>

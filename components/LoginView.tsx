@@ -235,14 +235,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
             <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-medium leading-relaxed">
               {t.agreementPrefix}
               <button 
-                onClick={() => openExternalLink('https://shoflakklba.vercel.app/terms')}
+                onClick={() => openExternalLink('https://www.shoflakklba.app/terms')}
                 className="text-[#e2a05e] hover:opacity-80 font-bold underline underline-offset-2"
               >
                 {t.termsAndConditions}
               </button>
               {t.agreementAnd}
               <button 
-                onClick={() => openExternalLink('https://shoflakklba.vercel.app/privacy')}
+                onClick={() => openExternalLink('https://www.shoflakklba.app/privacy')}
                 className="text-[#e2a05e] hover:opacity-80 font-bold underline underline-offset-2"
               >
                 {t.privacyPolicy}

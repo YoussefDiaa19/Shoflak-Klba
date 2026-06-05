@@ -1689,11 +1689,24 @@ const App: React.FC = () => {
 
       PushNotifications.addListener('registration', async ({ value }) => {
         if (!isMounted) return;
-        console.log('Registered for Push. FCM Token:', value);
-        if (currentUser.fcmToken !== value) {
-          const { error } = await supabase.from('profiles').update({ fcm_token: value }).eq('id', currentUser.id);
+        console.log('Registered for Push. Raw Token:', value);
+        
+        let tokenToSave = value;
+        if (Capacitor.getPlatform() === 'ios') {
+          try {
+            const { FCM } = await import('@capacitor-community/fcm');
+            const fcmToken = await FCM.getToken();
+            tokenToSave = fcmToken.token;
+            console.log('Got FCM Token for iOS:', tokenToSave);
+          } catch (err) {
+            console.warn('Failed to get FCM token on iOS (GoogleService-Info.plist might be missing):', err);
+          }
+        }
+        
+        if (currentUser.fcmToken !== tokenToSave) {
+          const { error } = await supabase.from('profiles').update({ fcm_token: tokenToSave }).eq('id', currentUser.id);
           if (!error) {
-            setCurrentUser(prev => prev ? { ...prev, fcmToken: value } : prev);
+            setCurrentUser(prev => prev ? { ...prev, fcmToken: tokenToSave } : prev);
           }
         }
       });

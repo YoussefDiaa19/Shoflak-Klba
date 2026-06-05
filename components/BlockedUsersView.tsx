@@ -32,7 +32,7 @@ export const BlockedUsersView: React.FC<BlockedUsersViewProps> = ({ blockedIds, 
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#1a1a1a] animate-in duration-500">
-      <div className="p-5 flex items-center gap-4 border-b dark:border-zinc-800">
+      <div className="px-5 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] flex items-center gap-4 border-b dark:border-zinc-800">
         <button onClick={onBack} className={`p-2.5 bg-gray-100 dark:bg-zinc-800 rounded-2xl text-gray-900 dark:text-white shadow-sm transition-colors`}>
           <ArrowLeft size={24} />
         </button>

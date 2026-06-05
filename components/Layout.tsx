@@ -69,8 +69,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-[#1a1a1a]">
-      <div className="h-[env(safe-area-inset-top)] bg-white dark:bg-[#1a1a1a]" />
-      
       <main id="app-main" ref={mainRef} className="flex-grow overflow-y-auto hide-scrollbar">
         {children}
       </main>
@@ -111,8 +109,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           })}
         </div>
       )}
-      
-      <div className="h-[env(safe-area-inset-bottom)] bg-white dark:bg-[#1a1a1a]" />
     </div>
   );
 };

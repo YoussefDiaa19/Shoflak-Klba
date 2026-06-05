@@ -21,7 +21,7 @@
       "androidScaleType": "CENTER_CROP"
     },
     "PushNotifications": {
-      "presentationOptions": []
+      "presentationOptions": ["badge", "sound", "alert"]
     },
     "GoogleAuth": {
       "scopes": ["profile", "email"],

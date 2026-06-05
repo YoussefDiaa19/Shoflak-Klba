@@ -51,7 +51,7 @@ export const OwnerProfile: React.FC<OwnerProfileProps> = ({ ownerId, pets, onBac
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-[#1a1a1a] overflow-hidden">
       {/* Fixed Sticky Header */}
-      <div className="p-5 flex items-center gap-4 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md z-10 border-b dark:border-zinc-800 shrink-0">
+      <div className="px-5 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] flex items-center gap-4 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md z-10 border-b dark:border-zinc-800 shrink-0">
         <button onClick={onBack} className={`p-2.5 bg-gray-100 dark:bg-zinc-800 rounded-2xl text-gray-900 dark:text-white shadow-md border border-gray-200 dark:border-zinc-700 transition-colors ${lang === 'ar' ? 'rotate-180' : ''}`}>
           <ArrowLeft size={20} />
         </button>

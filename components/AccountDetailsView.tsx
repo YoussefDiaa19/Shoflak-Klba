@@ -95,7 +95,7 @@ export const AccountDetailsView: React.FC<AccountDetailsViewProps> = ({ owner, o
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-[#1a1a1a]">
-        <div className="p-5 flex items-center gap-4">
+        <div className="px-5 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] flex items-center gap-4">
           <button onClick={onBack} className="p-2.5 bg-gray-100 dark:bg-zinc-800 rounded-2xl text-gray-900 dark:text-white shadow-md border border-gray-200 dark:border-zinc-700">
             <ArrowLeft size={24} />
           </button>
@@ -108,7 +108,7 @@ export const AccountDetailsView: React.FC<AccountDetailsViewProps> = ({ owner, o
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#1a1a1a] animate-in slide-in-from-right-4 duration-500">
-      <div className="p-5 flex items-center gap-4 sticky top-0 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md z-20">
+      <div className="px-5 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] flex items-center gap-4 sticky top-0 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md z-20">
         <button onClick={onBack} className="p-2.5 bg-gray-100 dark:bg-zinc-800 rounded-2xl text-gray-900 dark:text-white shadow-md border border-gray-200 dark:border-zinc-700 transition-colors">
           <ArrowLeft size={24} />
         </button>
