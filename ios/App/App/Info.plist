@@ -43,26 +43,22 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera so you can take photos of your pets.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to pick images of your pets.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.245649293558-jm3mhhde1e5o6h2ej0ca4t0mfkh8rs30</string>
 			</array>
 		</dict>
 	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>This app requires access to your camera to capture photos for your pet profile and share images in chat rooms.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app requires access to your photo library to select photos for your pet profile and upload images to chat rooms.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app requires permission to save photos from chat rooms and pet profiles to your library.</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
 </dict>
 </plist>
