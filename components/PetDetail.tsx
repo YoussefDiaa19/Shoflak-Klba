@@ -112,11 +112,11 @@ export const PetDetail: React.FC<PetDetailProps> = ({ pet, onBack, onChat, onVie
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto hide-scrollbar">
         <div className="relative h-[55vh] group overflow-hidden">
-          <button onClick={onBack} className={`absolute top-[calc(env(safe-area-inset-top)+1rem)] ${lang === 'ar' ? 'right-5 rotate-180' : 'left-5'} p-3 rounded-2xl bg-white/20 backdrop-blur-md text-white border border-white/20 active:scale-90 shadow-xl transition-all z-[60]`}>
+          <button onClick={onBack} className={`absolute top-[max(env(safe-area-inset-top,3.5rem),3.5rem)] ${lang === 'ar' ? 'right-5 rotate-180' : 'left-5'} p-3 rounded-2xl bg-white/20 backdrop-blur-md text-white border border-white/20 active:scale-90 shadow-xl transition-all z-[60]`}>
             <ArrowLeft size={24} />
           </button>
 
-          <div className={`absolute top-[calc(env(safe-area-inset-top)+1rem)] ${lang === 'ar' ? 'left-5' : 'right-5'} z-[60]`}>
+          <div className={`absolute top-[max(env(safe-area-inset-top,3.5rem),3.5rem)] ${lang === 'ar' ? 'left-5' : 'right-5'} z-[60]`}>
             {showMenu && (
               <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
             )}

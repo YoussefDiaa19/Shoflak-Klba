@@ -35,7 +35,7 @@ export const LocationSetupView: React.FC<LocationSetupViewProps> = ({ owner, onC
 
   return (
     <div className="fixed inset-0 z-[200] bg-white dark:bg-[#1a1a1a] flex flex-col p-8 items-center justify-center text-center animate-in fade-in duration-500">
-      <div className="absolute top-[calc(env(safe-area-inset-top)+1.5rem)] left-6 z-10 w-fit">
+      <div className="absolute top-[max(env(safe-area-inset-top,4rem),4rem)] left-6 z-10 w-fit">
         <button 
           onClick={() => setLang(lang === 'en' ? 'ar' : 'en')}
           className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-zinc-800 rounded-xl text-gray-900 dark:text-white font-bold tracking-wide active:scale-95 transition-all text-sm shadow-sm"

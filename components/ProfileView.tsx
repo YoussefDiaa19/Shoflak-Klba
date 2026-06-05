@@ -459,7 +459,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   const approvedPetsCount = owner ? myPets.filter(p => p.status === 'approved').length : 0;
 
   return (
-    <div className="px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-32 animate-in fade-in duration-500 bg-white dark:bg-[#1a1a1a] min-h-screen relative overflow-hidden">
+    <div className="px-5 pt-[max(env(safe-area-inset-top,4rem),4rem)] pb-32 animate-in fade-in duration-500 bg-white dark:bg-[#1a1a1a] min-h-screen relative overflow-hidden">
       
       {isActive && pullProgress > 0 && (
         <div 

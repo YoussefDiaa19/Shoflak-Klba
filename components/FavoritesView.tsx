@@ -60,7 +60,7 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
   }, [isLoading, isFetchingMore, hasMore, onLoadMore, pets.length, currentUser]);
 
   return (
-    <div className="px-5 pt-[calc(env(safe-area-inset-top)+2rem)] animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white dark:bg-[#1a1a1a] min-h-screen">
+    <div className="px-5 pt-[max(env(safe-area-inset-top,4.5rem),4.5rem)] animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white dark:bg-[#1a1a1a] min-h-screen">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t.favorites}</h1>
       </div>

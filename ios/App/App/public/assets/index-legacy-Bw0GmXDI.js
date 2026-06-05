@@ -1,0 +1,1 @@
+System.register(["./index-legacy-cWp7hRCV.js"],function(e,t){"use strict";var n,r;return{setters:[function(e){n=e.r,r=e._}],execute:function(){e("FCM",n("FCM",{web:function(){return r(function(){return t.import("./web-legacy-CvFcaisd.js")},void 0,t.meta.url).then(function(e){return new e.FCMWeb})}}))}}});

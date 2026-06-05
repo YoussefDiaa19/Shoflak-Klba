@@ -1667,26 +1667,7 @@ const App: React.FC = () => {
         return;
       }
 
-      // Android 8+ requires a notification channel to display notifications
-      try {
-        await PushNotifications.createChannel({
-          id: 'default',
-          name: 'Shoflak Klba Messages',
-          description: 'Receive notifications for new messages',
-          importance: 5,
-          visibility: 1,
-          vibration: true,
-        });
-      } catch (err) {
-        console.log('Channel creation error (usually ignored on iOS):', err);
-      }
-
-      try {
-        await PushNotifications.register();
-      } catch (err) {
-        console.warn('PushNotifications register failed:', err);
-      }
-
+      // Add listeners BEFORE registering
       PushNotifications.addListener('registration', async ({ value }) => {
         if (!isMounted) return;
         console.log('Registered for Push. Raw Token:', value);
@@ -1696,7 +1677,11 @@ const App: React.FC = () => {
           try {
             const { FCM } = await import('@capacitor-community/fcm');
             const fcmToken = await FCM.getToken();
-            tokenToSave = fcmToken.token;
+            
+            // Wait sometimes the token is present and valid
+            if (fcmToken && fcmToken.token) {
+               tokenToSave = fcmToken.token;
+            }
             console.log('Got FCM Token for iOS:', tokenToSave);
           } catch (err) {
             console.warn('Failed to get FCM token on iOS (GoogleService-Info.plist might be missing):', err);
@@ -1758,6 +1743,26 @@ const App: React.FC = () => {
           }
         }
       });
+
+      // Android 8+ requires a notification channel to display notifications
+      try {
+        await PushNotifications.createChannel({
+          id: 'default',
+          name: 'Shoflak Klba Messages',
+          description: 'Receive notifications for new messages',
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+        });
+      } catch (err) {
+        console.log('Channel creation error (usually ignored on iOS):', err);
+      }
+
+      try {
+        await PushNotifications.register();
+      } catch (err) {
+        console.warn('PushNotifications register failed:', err);
+      }
 
       LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
         console.log('Local notification action performed:', notification);

@@ -501,7 +501,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
       {previewUrls.length > 0 && (
         <div className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-3xl flex flex-col animate-in fade-in duration-300 overflow-hidden">
            {/* Top Header */}
-           <div className="flex justify-between items-center px-6 pb-6 pt-[calc(env(safe-area-inset-top)+1.5rem)] bg-black/40 relative z-10">
+           <div className="flex justify-between items-center px-6 pb-6 pt-[max(env(safe-area-inset-top,4rem),4rem)] bg-black/40 relative z-10">
               <button 
                 onClick={() => { previewUrls.forEach(url => URL.revokeObjectURL(url)); setPreviewUrls([]); setSelectedFiles([]); setCaption(''); setCurrentPreviewIndex(0); }}
                 className="p-3 bg-white/10 text-white rounded-full active:scale-90 transition-transform hover:bg-white/20"
@@ -648,7 +648,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
 
       {showViewer && viewerImages.length > 0 && (
         <div className="fixed inset-0 z-[500] bg-black/95 backdrop-blur-2xl flex flex-col animate-in fade-in duration-300">
-          <div className="flex justify-between items-center px-6 pb-6 pt-[calc(env(safe-area-inset-top)+1.5rem)] bg-black/50">
+          <div className="flex justify-between items-center px-6 pb-6 pt-[max(env(safe-area-inset-top,4rem),4rem)] bg-black/50">
             <button 
               onClick={() => setShowViewer(false)}
               className="p-3 bg-white/10 text-white rounded-full active:scale-90 transition-transform"
