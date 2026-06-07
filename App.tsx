@@ -1305,6 +1305,9 @@ const App: React.FC = () => {
       const parts = Array.isArray(newChat.participants) ? newChat.participants : [];
       if (!parts.map((p: any) => String(p)).includes(userId)) return;
       
+      // Fetch latest messages since message RLS might prevent realtime broadcast
+      fetchChatHistory(String(newChat.id));
+      
       setChats(prev => {
         const idx = prev.findIndex(c => String(c.id) === String(newChat.id));
         if (idx === -1) {
@@ -1331,7 +1334,7 @@ const App: React.FC = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser?.id, handleMsg, handleMsgUpdate, fetchUserSpecificData]);
+  }, [currentUser?.id, handleMsg, handleMsgUpdate, fetchUserSpecificData, fetchChatHistory]);
 
   useEffect(() => {
     // We rely on the missingIds logic in the next useEffect to load profiles on-demand
