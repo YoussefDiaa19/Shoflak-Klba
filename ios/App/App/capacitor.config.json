@@ -9,10 +9,6 @@
 			"*"
 		]
 	},
-	"ios": {
-		"allowsLinkPreview": false,
-		"allowsBackForwardNavigationGestures": true
-	},
 	"plugins": {
 		"SplashScreen": {
 			"launchShowDuration": 3000,

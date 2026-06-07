@@ -402,64 +402,35 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const goBack = useCallback(() => {
-    if (history.length > 0) {
-      window.history.back();
-    } else {
-      setDirection(-1);
-      setHistory([]);
-      setView('home');
-    }
-  }, [history.length]);
-
-  // Browser History Sync for Native Swipe-to-Go-Back
-  const previousHistoryLengthRef = useRef(history.length);
-  useEffect(() => {
-    if (history.length > previousHistoryLengthRef.current) {
-      const newCount = history.length - previousHistoryLengthRef.current;
-      for (let i = 0; i < newCount; i++) {
-        window.history.pushState({ internal: true }, '');
+    setDirection(-1);
+    setHistory(prev => {
+      const newHistory = [...prev];
+      const lastView = newHistory.pop();
+      
+      // If we are going back to profile from a sub-setting, tell it to show the menu
+      if (lastView === 'profile' && ['account-details', 'blocked-users', 'contact-us'].includes(view)) {
+        setProfileMenuInitial(true);
+      } else {
+        setProfileMenuInitial(false);
       }
-    }
-    previousHistoryLengthRef.current = history.length;
-  }, [history.length]);
 
-  useEffect(() => {
-    if (!window.history.state?.internal) {
-      window.history.replaceState({ internal: true, root: true }, '');
-    }
+      if (lastView) setView(lastView);
+      else setView('home');
+      return newHistory;
+    });
+  }, [view]);
 
-    const handlePopState = (e: PopStateEvent) => {
-      setDirection(-1);
-      setHistory(prev => {
-        const newHistory = [...prev];
-        const lastView = newHistory.pop();
-        
-        if (lastView === 'profile' && ['account-details', 'blocked-users', 'contact-us'].includes(viewRef.current)) {
-          setProfileMenuInitial(true);
-        } else {
-          setProfileMenuInitial(false);
-        }
-
-        if (lastView) setView(lastView);
-        else setView('home');
-        return newHistory;
-      });
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Native Android Hardware back button
+  // Native Android Hardware back button / Edge Swipe back
   useEffect(() => {
     const handleBackButton = async () => {
       const event = new CustomEvent('hardwareBack', { cancelable: true });
       window.dispatchEvent(event);
       if (event.defaultPrevented) return;
 
-      if (viewRef.current !== 'home' && viewRef.current !== 'chats' && viewRef.current !== 'favorites' && viewRef.current !== 'profile') {
-        goBack(); // This now calls window.history.back()
+      if (view !== 'home' && view !== 'chats' && view !== 'favorites' && view !== 'profile') {
+        goBack();
       } else {
+        // We are on a root tab, minimize the app
         await CapacitorApp.minimizeApp();
       }
     };
@@ -468,7 +439,7 @@ const App: React.FC = () => {
     return () => {
       CapacitorApp.removeAllListeners();
     };
-  }, [goBack]);
+  }, [view, goBack]);
 
   useEffect(() => {
     if (toast) {
