@@ -85,7 +85,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
       try {
         console.log("Triggering native Apple sign in...");
         const result = await SignInWithApple.authorize({
-          clientId: 'com.shoflakklba.app.PUV3DTN3CNn', // Services ID
+          clientId: 'com.shoflakklba.app', // Correct App Bundle ID on iOS
           redirectURI: 'https://pgkbzeixrtcehbfemsqe.supabase.co/auth/v1/callback',
           scopes: 'email name',
         });
@@ -104,8 +104,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No Identity Token received from Apple native login");
         }
       } catch (err: any) {
-        console.error("Native Apple Login failed, falling back to web OAuth:", err);
-        // Do not return here, fall through to web flow if native fails
+        console.error("Native Apple Login failed:", err);
+        setLoginError(err.message || "Native Apple sign in failed.");
+        setIsSubmitting(false);
+        return; // CRITICAL: Stop here and do NOT open browser fallback on iOS
       }
     }
 

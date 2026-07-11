@@ -62,6 +62,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>shoflakklba</string>
 				<string>com.shoflakklba.app</string>
 				<string>com.shoflakklba</string>
 				<string>com.shoflakklba.app.PUV3DTN3CN</string>

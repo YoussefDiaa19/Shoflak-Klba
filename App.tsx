@@ -244,6 +244,8 @@ const App: React.FC = () => {
   const [deletedAccountLoginError, setDeletedAccountLoginError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isRedirectingToApp, setIsRedirectingToApp] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string>('');
   const [homeFetchError, setHomeFetchError] = useState<string | null>(null);
   const [favFetchError, setFavFetchError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -395,14 +397,18 @@ const App: React.FC = () => {
       
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
       const schemes = isIOS 
-        ? ['com.shoflakklba.app', 'com.shoflakklba', 'com.shoflakklba.app.PUV3DTN3CN', 'com.shoflakklba.app.puv3dtn3cn']
-        : ['com.shoflakklba', 'com.shoflakklba.app'];
+        ? ['shoflakklba', 'com.shoflakklba.app', 'com.shoflakklba', 'com.shoflakklba.app.PUV3DTN3CN', 'com.shoflakklba.app.puv3dtn3cn']
+        : ['shoflakklba', 'com.shoflakklba', 'com.shoflakklba.app'];
 
       console.log(`Mobile redirect schemes:`, schemes);
       
-      // Try to redirect using the schemes in sequence
       const primaryScheme = schemes[0];
-      window.location.href = `${primaryScheme}://${appPath}`;
+      const primaryUrl = `${primaryScheme}://${appPath}`;
+      setRedirectUrl(primaryUrl);
+      setIsRedirectingToApp(true);
+      
+      // Try to redirect using the schemes in sequence
+      window.location.href = primaryUrl;
       
       setTimeout(() => {
         const secondaryScheme = schemes[1] || schemes[0];
@@ -2097,6 +2103,45 @@ const App: React.FC = () => {
           setShowAuthModal(true);
         }} />
       </>
+    );
+  }
+
+  if (isRedirectingToApp || window.location.pathname.includes('/auth/callback')) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-[36px] p-8 shadow-xl border border-gray-100 dark:border-zinc-800 flex flex-col items-center gap-6">
+          <div className="w-16 h-16 bg-[#e2a05e]/10 dark:bg-[#e2a05e]/20 rounded-full flex items-center justify-center text-[#e2a05e]">
+            <Loader2 className="w-8 h-8 animate-spin" />
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {appLang === 'ar' ? 'جاري العودة إلى التطبيق...' : 'Returning to the App...'}
+            </h2>
+            <p className="text-gray-500 dark:text-zinc-400 text-sm px-4">
+              {appLang === 'ar' 
+                ? 'لقد نجحت في تسجيل الدخول! جاري توجيهك إلى تطبيق شُوف لك كلبًا.' 
+                : 'You have logged in successfully! We are redirecting you back to Shoflak Klba.'}
+            </p>
+          </div>
+
+          {redirectUrl && (
+            <a 
+              href={redirectUrl}
+              className="w-full py-4 px-6 bg-[#e2a05e] hover:bg-[#d08f4d] active:scale-[0.98] transition-all text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-base cursor-pointer"
+            >
+              <span>{appLang === 'ar' ? 'فتح في التطبيق' : 'Open in App'}</span>
+              <ArrowRight className="w-5 h-5" />
+            </a>
+          )}
+
+          <p className="text-xs text-gray-400 dark:text-zinc-500">
+            {appLang === 'ar' 
+              ? 'إذا لم يفتح التطبيق تلقائيًا، انقر فوق الزر أعلاه.' 
+              : "If the app didn't open automatically, tap the button above."}
+          </p>
+        </div>
+      </div>
     );
   }
 
