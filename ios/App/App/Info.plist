@@ -57,6 +57,14 @@
 				<string>com.googleusercontent.apps.245649293558-jm3mhhde1e5o6h2ej0ca4t0mfkh8rs30</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.shoflakklba.app</string>
+			</array>
+		</dict>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

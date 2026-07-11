@@ -328,7 +328,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       const listener = CapacitorApp.addListener('appUrlOpen', async (data) => {
-        if (data.url.includes('/auth/callback') || data.url.includes('#access_token=')) {
+        if (data.url.includes('/auth/callback') || data.url.includes('#access_token=') || data.url.includes('code=')) {
           console.log("App opened with auth callback URL:", data.url);
           
           try {
@@ -336,18 +336,45 @@ const App: React.FC = () => {
             await Browser.close();
           } catch (e) {}
 
-          const hashIndex = data.url.indexOf('#');
-          if (hashIndex !== -1) {
-            const hash = data.url.substring(hashIndex + 1);
-            const params = new URLSearchParams(hash);
-            const access_token = params.get('access_token');
-            const refresh_token = params.get('refresh_token');
+          // 1. Try to parse 'code' for PKCE flow
+          let code: string | null = null;
+          const queryIndex = data.url.indexOf('?');
+          if (queryIndex !== -1) {
+            const queryStr = data.url.substring(queryIndex + 1).split('#')[0];
+            const params = new URLSearchParams(queryStr);
+            code = params.get('code');
+          }
 
-            if (access_token && refresh_token) {
-              await supabase.auth.setSession({
-                access_token,
-                refresh_token,
-              });
+          if (code) {
+            console.log("Exchanging auth code for session in native platform...");
+            try {
+              const { error } = await supabase.auth.exchangeCodeForSession(code);
+              if (error) throw error;
+              console.log("Auth code successfully exchanged for session!");
+            } catch (exchangeError) {
+              console.error("Failed to exchange code for session:", exchangeError);
+            }
+          } else {
+            // 2. Fall back to parsing '#access_token' for Implicit flow
+            const hashIndex = data.url.indexOf('#');
+            if (hashIndex !== -1) {
+              const hash = data.url.substring(hashIndex + 1);
+              const params = new URLSearchParams(hash);
+              const access_token = params.get('access_token');
+              const refresh_token = params.get('refresh_token');
+
+              if (access_token && refresh_token) {
+                try {
+                  const { error } = await supabase.auth.setSession({
+                    access_token,
+                    refresh_token,
+                  });
+                  if (error) throw error;
+                  console.log("Implicit session successfully restored!");
+                } catch (sessionError) {
+                  console.error("Failed to set session from hash:", sessionError);
+                }
+              }
             }
           }
         }
