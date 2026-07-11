@@ -63,6 +63,9 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.shoflakklba.app</string>
+				<string>com.shoflakklba</string>
+				<string>com.shoflakklba.app.PUV3DTN3CN</string>
+				<string>com.shoflakklba.app.puv3dtn3cn</string>
 			</array>
 		</dict>
 	</array>

@@ -135,9 +135,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
 
     // WEB / FALLBACK FLOW
     const baseOrigin = window.location.origin.endsWith('/') ? window.location.origin.slice(0, -1) : window.location.origin;
-    const redirectTo = isNative 
-      ? 'com.shoflakklba.app://' 
-      : `${baseOrigin}/auth/callback`;
+    const redirectTo = `${baseOrigin}/auth/callback`;
     
     console.log("Initiating OAuth login with redirect to:", redirectTo);
     console.log("Make sure this URL is in your Supabase Redirect URLs list!");

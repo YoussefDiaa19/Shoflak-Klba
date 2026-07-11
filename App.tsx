@@ -384,17 +384,40 @@ const App: React.FC = () => {
       };
     }
 
+    // 1. Mobile-specific redirection handler for OAuth callback
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobileDevice && (hash.includes('access_token') || search.includes('code='))) {
+      console.log("On mobile device with auth tokens. Redirecting to custom scheme deep link...");
+      const appPath = `/auth/callback${search}${hash}`;
+      
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const schemes = isIOS 
+        ? ['com.shoflakklba.app', 'com.shoflakklba', 'com.shoflakklba.app.PUV3DTN3CN', 'com.shoflakklba.app.puv3dtn3cn']
+        : ['com.shoflakklba', 'com.shoflakklba.app'];
+
+      console.log(`Mobile redirect schemes:`, schemes);
+      
+      // Try to redirect using the schemes in sequence
+      const primaryScheme = schemes[0];
+      window.location.href = `${primaryScheme}://${appPath}`;
+      
+      setTimeout(() => {
+        const secondaryScheme = schemes[1] || schemes[0];
+        window.location.href = `${secondaryScheme}://${appPath}`;
+      }, 400);
+
+      setTimeout(() => {
+        const tertiaryScheme = schemes[2] || schemes[0];
+        window.location.href = `${tertiaryScheme}://${appPath}`;
+      }, 800);
+      
+      return;
+    }
+
     if (window.location.pathname.includes('/auth/callback')) {
-      const hash = window.location.hash;
-      const search = window.location.search;
-      
-      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobileDevice && (hash.includes('access_token') || search.includes('code='))) {
-        console.log("On mobile device at callback. Redirecting to deep link custom scheme...");
-        window.location.href = `com.shoflakklba.app://auth/callback${search}${hash}`;
-        return;
-      }
-      
       if (window.opener && (hash || search)) {
         if (hash.includes('access_token')) {
           window.opener.postMessage({ type: 'OAUTH_SUCCESS', payload: { hash } }, '*');
