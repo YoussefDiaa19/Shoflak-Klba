@@ -326,6 +326,37 @@ const App: React.FC = () => {
 
   // Handle OAuth callback logic
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const listener = CapacitorApp.addListener('appUrlOpen', async (data) => {
+        if (data.url.includes('/auth/callback') || data.url.includes('#access_token=')) {
+          console.log("App opened with auth callback URL:", data.url);
+          
+          try {
+            const { Browser } = await import('@capacitor/browser');
+            await Browser.close();
+          } catch (e) {}
+
+          const hashIndex = data.url.indexOf('#');
+          if (hashIndex !== -1) {
+            const hash = data.url.substring(hashIndex + 1);
+            const params = new URLSearchParams(hash);
+            const access_token = params.get('access_token');
+            const refresh_token = params.get('refresh_token');
+
+            if (access_token && refresh_token) {
+              await supabase.auth.setSession({
+                access_token,
+                refresh_token,
+              });
+            }
+          }
+        }
+      });
+      return () => {
+        listener.then(l => l.remove());
+      };
+    }
+
     if (window.location.pathname.includes('/auth/callback')) {
       const hash = window.location.hash;
       const search = window.location.search;
