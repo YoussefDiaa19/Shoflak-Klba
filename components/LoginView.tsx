@@ -85,7 +85,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
       try {
         console.log("Triggering native Apple sign in...");
         const result = await SignInWithApple.authorize({
-          clientId: 'com.shoflakklba.app', // Correct App Bundle ID on iOS
+          clientId: 'com.shoflakklba.app.PUV3DTN3CN', // Correct Services ID on iOS
           redirectURI: 'https://pgkbzeixrtcehbfemsqe.supabase.co/auth/v1/callback',
           scopes: 'email name',
         });
