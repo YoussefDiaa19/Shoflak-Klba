@@ -388,6 +388,13 @@ const App: React.FC = () => {
       const hash = window.location.hash;
       const search = window.location.search;
       
+      const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobileDevice && (hash.includes('access_token') || search.includes('code='))) {
+        console.log("On mobile device at callback. Redirecting to deep link custom scheme...");
+        window.location.href = `com.shoflakklba.app://auth/callback${search}${hash}`;
+        return;
+      }
+      
       if (window.opener && (hash || search)) {
         if (hash.includes('access_token')) {
           window.opener.postMessage({ type: 'OAUTH_SUCCESS', payload: { hash } }, '*');
