@@ -830,12 +830,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 {newPet.images?.length !== 3 && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1">{t.imagesRequired}</p>}
               </div>
 
-              <input required className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" placeholder={t.petName} value={newPet.name} onChange={e => setNewPet({...newPet, name: e.target.value})} />
+              <div>
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">NAME</label>
+                <input required className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" placeholder={t.petName} value={newPet.name} onChange={e => setNewPet({...newPet, name: e.target.value})} />
+              </div>
               <div className="grid grid-cols-2 gap-4">
-                <input required type="number" min="1" max="30" className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" placeholder={t.age} value={newPet.age || ''} onChange={e => setNewPet({...newPet, age: e.target.value === '' ? ('' as any) : Math.min(30, Math.max(1, parseInt(e.target.value) || 1))})} />
-                <select className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" value={newPet.type} onChange={e => setNewPet({...newPet, type: e.target.value as any, breed: getBreedListForType(e.target.value as any)[0].en})}>
-                  <option value="Dog">{t.dog}</option><option value="Cat">{t.cat}</option><option value="Bird">{t.bird}</option>
-                </select>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">AGE</label>
+                  <input required type="number" min="1" max="30" className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" placeholder={t.age} value={newPet.age || ''} onChange={e => setNewPet({...newPet, age: e.target.value === '' ? ('' as any) : Math.min(30, Math.max(1, parseInt(e.target.value) || 1))})} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">TYPE</label>
+                  <select className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" value={newPet.type} onChange={e => setNewPet({...newPet, type: e.target.value as any, breed: getBreedListForType(e.target.value as any)[0].en})}>
+                    <option value="Dog">{t.dog}</option><option value="Cat">{t.cat}</option><option value="Bird">{t.bird}</option>
+                  </select>
+                </div>
               </div>
               <div className="w-full">
                 <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t.breed}</label>

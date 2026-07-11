@@ -74,17 +74,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
     setIsSubmitting(true);
     setLoginError('');
     
-    // Apple Login Hooks (Placeholder for production)
-    if (provider === 'apple') {
-      if (isNative) {
-        // Here you would use @capacitor-community/apple-sign-in
-        setLoginError("Apple Sign In requires a developer account ($99/yr) and configuration in Apple Developer Console.");
-        setIsSubmitting(false);
-        return;
-      } else {
-        // Web Apple SignIn usually handled by Supabase but needs Client ID in config
-      }
-    }
+    // Web Apple SignIn usually handled by Supabase
+    // Using standard Supabase OAuth flow for both web and mobile unless specific Capacitor plugin is added later
 
     // NATIVE GOOGLE LOGIN (Android/iOS only, and if plugin loaded)
     if (provider === 'google' && isNative && GoogleAuth) {
@@ -120,16 +111,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
     console.log("Make sure this URL is in your Supabase Redirect URLs list!");
 
     try {
+      const queryParams: Record<string, string> = {};
+      if (provider === 'google') {
+        queryParams.prompt = 'select_account';
+        queryParams.access_type = 'offline';
+      }
+
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
         options: { 
           redirectTo,
           skipBrowserRedirect: true,
-          scopes: 'email profile openid',
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-          }
+          scopes: provider === 'apple' ? 'name email' : 'email profile openid',
+          queryParams
         }
       });
 
@@ -224,8 +218,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
             </button>
 
             <button 
-              onClick={() => {}} 
-              className="w-full py-3.5 bg-black dark:bg-[#2a2a2a] border-2 border-black dark:border-zinc-700 rounded-full flex items-center justify-center gap-2 font-bold text-sm text-white hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
+              onClick={() => handleSocialLogin('apple')} 
+              disabled={isSubmitting}
+              className="w-full py-3.5 bg-black dark:bg-[#2a2a2a] border-2 border-black dark:border-zinc-700 rounded-full flex items-center justify-center gap-2 font-bold text-sm text-white hover:opacity-90 transition-all active:scale-[0.98] shadow-sm disabled:opacity-50"
             >
               <AppleLogo /> <span>{t.appleSignIn || "Continue with Apple"}</span>
             </button>
