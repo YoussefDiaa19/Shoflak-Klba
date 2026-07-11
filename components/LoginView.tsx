@@ -104,10 +104,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No Identity Token received from Apple native login");
         }
       } catch (err: any) {
-        console.error("Native Apple Login failed:", err);
-        setLoginError(err.message || "Native Apple sign in failed.");
-        setIsSubmitting(false);
-        return; // CRITICAL: Stop here and do NOT open browser fallback on iOS
+        console.warn("Native Apple Login failed, falling back to Web-Intercepted OAuth:", err);
+        // Do not return here, fall through to web flow if native fails
       }
     }
 
