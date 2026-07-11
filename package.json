@@ -15,7 +15,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1040.0",
     "@aws-sdk/s3-request-presigner": "^3.1040.0",
-    "@capacitor-community/apple-sign-in": "^7.1.0",
+    "@capacitor-community/apple-sign-in": "^6.0.0",
     "@capacitor-community/fcm": "^6.0.1",
     "@capacitor/android": "^6.2.0",
     "@capacitor/app": "^6.0.2",
