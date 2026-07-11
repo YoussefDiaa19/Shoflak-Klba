@@ -18,6 +18,7 @@ interface LoginViewProps {
 }
 
 import { SignInWithApple } from '@capacitor-community/apple-sign-in';
+import { Browser } from '@capacitor/browser';
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, onBack, isInline = false, externalError = null }) => {
   const [lang, setLang] = useState<'en' | 'ar'>('en');
@@ -79,8 +80,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
     // Web Apple SignIn usually handled by Supabase
     // Using standard Supabase OAuth flow for both web and mobile unless specific Capacitor plugin is added later
 
-    // NATIVE APPLE LOGIN
-    if (provider === 'apple' && isNative) {
+    // NATIVE APPLE LOGIN (Only on iOS natively)
+    if (provider === 'apple' && isNative && Capacitor.getPlatform() === 'ios') {
       try {
         console.log("Triggering native Apple sign in...");
         const result = await SignInWithApple.authorize({
@@ -103,9 +104,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No Identity Token received from Apple native login");
         }
       } catch (err: any) {
-        console.error("Native Apple Login failed:", err);
-        setIsSubmitting(false);
-        return;
+        console.error("Native Apple Login failed, falling back to web OAuth:", err);
+        // Do not return here, fall through to web flow if native fails
       }
     }
 
@@ -128,9 +128,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No ID Token received from native login");
         }
       } catch (err: any) {
-        console.error("Native Google Login failed:", err);
-        setIsSubmitting(false);
-        return;
+        console.error("Native Google Login failed, falling back to web OAuth:", err);
+        // Do not return here, fall through to web flow if native fails
       }
     }
 
@@ -164,7 +163,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
 
       if (data?.url) {
         if (isNative) {
-          window.open(data.url, '_system');
+          await Browser.open({ url: data.url });
         } else if (isIframe) {
           const popup = window.open(data.url, '_blank');
           if (!popup || popup.closed) {
