@@ -17,6 +17,8 @@ interface LoginViewProps {
   externalError?: string | null;
 }
 
+import { SignInWithApple } from '@capacitor-community/apple-sign-in';
+
 export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, onBack, isInline = false, externalError = null }) => {
   const [lang, setLang] = useState<'en' | 'ar'>('en');
   const t = translations[lang];
@@ -77,6 +79,36 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
     // Web Apple SignIn usually handled by Supabase
     // Using standard Supabase OAuth flow for both web and mobile unless specific Capacitor plugin is added later
 
+    // NATIVE APPLE LOGIN
+    if (provider === 'apple' && isNative) {
+      try {
+        console.log("Triggering native Apple sign in...");
+        const result = await SignInWithApple.authorize({
+          clientId: 'com.shoflakklba.app.PUV3DTN3CNn', // Services ID
+          redirectURI: 'https://pgkbzeixrtcehbfemsqe.supabase.co/auth/v1/callback',
+          scopes: 'email name',
+        });
+
+        if (result.response && result.response.identityToken) {
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: result.response.identityToken
+          });
+          if (error) throw error;
+          if (data?.user) {
+            setIsSubmitting(false);
+            return;
+          }
+        } else {
+          throw new Error("No Identity Token received from Apple native login");
+        }
+      } catch (err: any) {
+        console.error("Native Apple Login failed:", err);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     // NATIVE GOOGLE LOGIN (Android/iOS only, and if plugin loaded)
     if (provider === 'google' && isNative && GoogleAuth) {
       try {
@@ -96,8 +128,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No ID Token received from native login");
         }
       } catch (err: any) {
-        console.error("Native Google Login failed, falling back to web:", err);
-        // Do not return here, fall through to web flow if native fails
+        console.error("Native Google Login failed:", err);
+        setIsSubmitting(false);
+        return;
       }
     }
 

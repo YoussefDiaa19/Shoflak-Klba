@@ -324,24 +324,32 @@ const App: React.FC = () => {
     isOnlineRef.current = isOnline;
   }, [isOnline]);
 
-  // Handle OAuth callback logic if running in a popup
+  // Handle OAuth callback logic
   useEffect(() => {
-    if (window.opener && (window.location.hash || window.location.search)) {
+    if (window.location.pathname.includes('/auth/callback')) {
       const hash = window.location.hash;
       const search = window.location.search;
       
-      if (hash.includes('access_token')) {
-        window.opener.postMessage({ type: 'OAUTH_SUCCESS' }, '*');
-        // Give it a tiny bit of time to ensure message is sent before closing
-        setTimeout(() => window.close(), 500);
-      } else if (search.includes('error')) {
-        const params = new URLSearchParams(search);
-        const errorDescription = params.get('error_description') || params.get('error') || 'Authentication failed';
-        window.opener.postMessage({ 
-          type: 'OAUTH_ERROR', 
-          error: errorDescription
-        }, '*');
-        setTimeout(() => window.close(), 500);
+      if (window.opener && (hash || search)) {
+        if (hash.includes('access_token')) {
+          window.opener.postMessage({ type: 'OAUTH_SUCCESS', payload: { hash } }, '*');
+          // Give it a tiny bit of time to ensure message is sent before closing
+          setTimeout(() => window.close(), 500);
+        } else if (search.includes('error')) {
+          const params = new URLSearchParams(search);
+          const errorDescription = params.get('error_description') || params.get('error') || 'Authentication failed';
+          window.opener.postMessage({ 
+            type: 'OAUTH_ERROR', 
+            error: errorDescription
+          }, '*');
+          setTimeout(() => window.close(), 500);
+        }
+      } else {
+        // Not a popup (e.g. PWA or full browser redirect)
+        // Supabase will parse the hash automatically, we just clean up the URL
+        setTimeout(() => {
+          window.history.replaceState(null, '', '/');
+        }, 1000);
       }
     }
   }, []);
