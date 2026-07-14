@@ -13,10 +13,11 @@ interface AdminReportsViewProps {
   onDeletePet: (petId: string) => void;
   onDeleteUser: (userId: string) => void;
   currentUser: Owner;
+  limit?: number;
 }
 
 export const AdminReportsView: React.FC<AdminReportsViewProps> = ({ 
-  reports, pets, owners, onResolve, onDelete, onViewPet, onDeletePet, onDeleteUser, currentUser 
+  reports, pets, owners, onResolve, onDelete, onViewPet, onDeletePet, onDeleteUser, currentUser, limit
 }) => {
   const lang = currentUser.language || 'en';
   const t = translations[lang];
@@ -25,6 +26,7 @@ export const AdminReportsView: React.FC<AdminReportsViewProps> = ({
     if (a.isResolved === b.isResolved) return b.timestamp - a.timestamp;
     return a.isResolved ? 1 : -1;
   });
+  const displayedReports = limit ? sortedReports.slice(0, limit) : sortedReports;
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
@@ -34,7 +36,8 @@ export const AdminReportsView: React.FC<AdminReportsViewProps> = ({
           <p>{t.noReports}</p>
         </div>
       ) : (
-        sortedReports.map(report => {
+        <>
+          {displayedReports.map(report => {
           const pet = pets.find(p => p.id === report.petId);
           const reporter = owners.find(o => o.id === report.reporterId);
           const petOwner = pet ? owners.find(o => o.id === pet.ownerId) : null;
@@ -130,7 +133,17 @@ export const AdminReportsView: React.FC<AdminReportsViewProps> = ({
               )}
             </div>
           );
-        })
+        })}
+        {limit && limit < sortedReports.length && (
+          <div className="py-6 flex items-center justify-center">
+             <div className="flex gap-2">
+               <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce" />
+               <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.15s]" />
+               <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.3s]" />
+             </div>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

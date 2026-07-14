@@ -11,10 +11,11 @@ interface AdminMessageReportsViewProps {
   onDeleteReport: (id: string) => void;
   onDeleteUser: (userId: string) => void;
   currentUser: Owner;
+  limit?: number;
 }
 
 export const AdminMessageReportsView: React.FC<AdminMessageReportsViewProps> = ({
-  reports, owners, onResolve, onDeleteReport, onDeleteUser, currentUser
+  reports, owners, onResolve, onDeleteReport, onDeleteUser, currentUser, limit
 }) => {
   const lang = currentUser.language || 'en';
   const t = translations[lang];
@@ -23,6 +24,8 @@ export const AdminMessageReportsView: React.FC<AdminMessageReportsViewProps> = (
   const [selectedReportForModal, setSelectedReportForModal] = useState<MessageReport | null>(null);
 
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  const displayedReports = limit ? reports.slice(0, limit) : reports;
 
   useEffect(() => {
     reports.forEach(report => {
@@ -89,7 +92,7 @@ export const AdminMessageReportsView: React.FC<AdminMessageReportsViewProps> = (
 
   return (
     <div className="space-y-4">
-      {reports.map(report => {
+      {displayedReports.map(report => {
         const reporter = owners.find(o => o.id === report.reporterId);
         const reportedUser = owners.find(o => o.id === report.reportedUserId);
         const reportMessages = messages[report.id] || [];
@@ -191,6 +194,16 @@ export const AdminMessageReportsView: React.FC<AdminMessageReportsViewProps> = (
           </div>
         );
       })}
+
+      {limit && limit < reports.length && (
+        <div className="py-6 flex items-center justify-center">
+           <div className="flex gap-2">
+             <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce" />
+             <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.15s]" />
+             <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.3s]" />
+           </div>
+        </div>
+      )}
 
       {selectedReportForModal && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-6" onClick={() => setSelectedReportForModal(null)}>

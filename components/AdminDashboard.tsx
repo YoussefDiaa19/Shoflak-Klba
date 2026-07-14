@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Pet, Owner, SupportMessage, PetReport, MessageReport } from '../types';
 import { translations } from '../translations';
 import { Check, X, ShieldAlert, LogOut, Users, Package, Clock, MapPin, Trash2, PieChart, RefreshCw, AlertTriangle, ChevronRight, Mail, Flag, MessageSquare, Megaphone, Bell } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 import { AdminInquiriesView } from './AdminInquiriesView';
 import { AdminReportsView } from './AdminReportsView';
@@ -107,10 +108,11 @@ interface AdminDashboardProps {
   activeTab: 'overview' | 'pending' | 'pets' | 'users' | 'inquiries' | 'reports' | 'message-reports' | 'broadcast';
   setActiveTab: (tab: 'overview' | 'pending' | 'pets' | 'users' | 'inquiries' | 'reports' | 'message-reports' | 'broadcast') => void;
   onRefreshData?: () => void;
+  isVisible?: boolean;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
-  pets, owners, inquiries, reports, messageReports, onApprove, onReject, onDeletePet, onDeleteUser, onMarkInquiryRead, onDeleteInquiry, onResolveReport, onDeleteReport, onResolveMessageReport, onDeleteMessageReport, onLogout, onViewPet, onViewUser, currentUser, activeTab, setActiveTab, onRefreshData 
+  pets, owners, inquiries, reports, messageReports, onApprove, onReject, onDeletePet, onDeleteUser, onMarkInquiryRead, onDeleteInquiry, onResolveReport, onDeleteReport, onResolveMessageReport, onDeleteMessageReport, onLogout, onViewPet, onViewUser, currentUser, activeTab, setActiveTab, onRefreshData, isVisible
 }) => {
   const lang = currentUser.language || 'en';
   const t = translations[lang];
@@ -119,11 +121,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const isIOS = useMemo(() => Capacitor.getPlatform() === 'ios', []);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const tabScrollPositions = useRef<Record<string, number>>({});
+
+  const [visibleLimits, setVisibleLimits] = useState<Record<string, number>>({
+    pending: 8,
+    pets: 8,
+    users: 8,
+    inquiries: 8,
+    reports: 8,
+    'message-reports': 8,
+  });
+
+  // Restore scroll positions when tab changes or dashboard becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      const savedScroll = tabScrollPositions.current[activeTab] || 0;
+      const timeoutId = setTimeout(() => {
+        if (contentRef.current) {
+          contentRef.current.scrollTop = savedScroll;
+        }
+      }, 30);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isVisible, activeTab]);
+
+  const activeUsers = useMemo(() => owners.filter(o => !o.isAdmin), [owners]);
+
   // Directly filter based on trusted sanitized data from App.tsx
   const activePets = useMemo(() => pets.filter(p => p.status !== 'deleted'), [pets]);
   const pendingPets = useMemo(() => activePets.filter(p => p.status === 'pending'), [activePets]);
   const approvedPets = useMemo(() => activePets.filter(p => p.status === 'approved'), [activePets]);
   const rejectedPets = useMemo(() => activePets.filter(p => p.status === 'rejected'), [activePets]);
+
+  const displayedPendingPets = useMemo(() => {
+    return pendingPets.slice(0, visibleLimits['pending'] || 8);
+  }, [pendingPets, visibleLimits['pending']]);
+
+  const displayedActivePets = useMemo(() => {
+    return activePets.slice(0, visibleLimits['pets'] || 8);
+  }, [activePets, visibleLimits['pets']]);
+
+  const displayedUsers = useMemo(() => {
+    return activeUsers.slice(0, visibleLimits['users'] || 8);
+  }, [activeUsers, visibleLimits['users']]);
+
+  const loadMoreForActiveTab = () => {
+    const currentLimit = visibleLimits[activeTab];
+    if (currentLimit === undefined) return;
+
+    let totalItems = 0;
+    if (activeTab === 'pending') totalItems = pendingPets.length;
+    else if (activeTab === 'pets') totalItems = activePets.length;
+    else if (activeTab === 'users') totalItems = activeUsers.length;
+    else if (activeTab === 'inquiries') totalItems = inquiries.length;
+    else if (activeTab === 'reports') totalItems = reports.length;
+    else if (activeTab === 'message-reports') totalItems = messageReports.length;
+
+    if (currentLimit < totalItems) {
+      setVisibleLimits(prev => ({
+        ...prev,
+        [activeTab]: prev[activeTab] + 8
+      }));
+    }
+  };
+
+  const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    tabScrollPositions.current[activeTab] = e.currentTarget.scrollTop;
+
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 150) {
+      loadMoreForActiveTab();
+    }
+  };
   
   const handleRefresh = async () => {
     console.log("[ADMIN] Manually refreshing global data...");
@@ -157,7 +228,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] flex flex-col animate-in fade-in duration-500 pb-24">
       {/* Header */}
-      <div className="p-6 bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-between sticky top-0 z-10 border-b dark:border-zinc-800">
+      <div className={`p-6 bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-between sticky top-0 z-10 border-b dark:border-zinc-800 ${isIOS ? 'pt-[calc(1.5rem+env(safe-area-inset-top))]' : ''}`}>
         <div className="flex items-center gap-3">
           <div className="bg-[#e2a05e] p-2 rounded-xl text-white shadow-lg">
             <ShieldAlert size={24} />
@@ -209,7 +280,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ))}
       </div>
 
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div 
+        ref={contentRef}
+        onScroll={handleContentScroll}
+        className="flex-1 p-6 overflow-y-auto"
+      >
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
@@ -283,38 +358,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <p>{t.noPendingPets}</p>
               </div>
             ) : (
-              pendingPets.map(pet => (
-                <div key={pet.id} className="bg-white dark:bg-zinc-900 p-5 rounded-[32px] border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer w-full" onClick={() => onViewPet(pet)}>
-                    {pet.images && pet.images.length > 0 ? (
-                      <img src={pet.images[0]} className="w-16 h-16 rounded-2xl object-cover shadow-sm shrink-0" alt={pet.name} referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                        <Package size={24} className="text-gray-400" />
+              <>
+                {displayedPendingPets.map(pet => (
+                  <div key={pet.id} className="bg-white dark:bg-zinc-900 p-5 rounded-[32px] border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer w-full" onClick={() => onViewPet(pet)}>
+                      {pet.images && pet.images.length > 0 ? (
+                        <img src={pet.images[0]} className="w-16 h-16 rounded-2xl object-cover shadow-sm shrink-0" alt={pet.name} referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                          <Package size={24} className="text-gray-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-gray-900 dark:text-white truncate">{pet.name}, {pet.age}</h3>
+                        <p className="text-xs text-gray-500 truncate">{pet.breed} • {pet.location}</p>
                       </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-gray-900 dark:text-white truncate">{pet.name}, {pet.age}</h3>
-                      <p className="text-xs text-gray-500 truncate">{pet.breed} • {pet.location}</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0 self-end sm:self-auto w-full sm:w-auto justify-end mt-2 sm:mt-0">
+                      <button onClick={() => onApprove(pet.id)} className="flex-1 sm:flex-none flex items-center justify-center p-3 bg-green-50 dark:bg-green-900/10 text-green-600 rounded-2xl hover:bg-green-100 transition-colors shadow-sm">
+                        <Check size={20} />
+                      </button>
+                      <button onClick={() => onReject(pet.id)} className="flex-1 sm:flex-none flex items-center justify-center p-3 bg-red-50 dark:bg-red-900/10 text-red-500 rounded-2xl hover:bg-red-100 transition-colors shadow-sm">
+                        <X size={20} />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0 self-end sm:self-auto w-full sm:w-auto justify-end mt-2 sm:mt-0">
-                    <button onClick={() => onApprove(pet.id)} className="flex-1 sm:flex-none flex items-center justify-center p-3 bg-green-50 dark:bg-green-900/10 text-green-600 rounded-2xl hover:bg-green-100 transition-colors shadow-sm">
-                      <Check size={20} />
-                    </button>
-                    <button onClick={() => onReject(pet.id)} className="flex-1 sm:flex-none flex items-center justify-center p-3 bg-red-50 dark:bg-red-900/10 text-red-500 rounded-2xl hover:bg-red-100 transition-colors shadow-sm">
-                      <X size={20} />
-                    </button>
+                ))}
+
+                {visibleLimits['pending'] < pendingPets.length && (
+                  <div className="py-6 flex items-center justify-center">
+                     <div className="flex gap-2">
+                       <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce" />
+                       <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.15s]" />
+                       <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.3s]" />
+                     </div>
                   </div>
-                </div>
-              ))
+                )}
+              </>
             )}
           </div>
         )}
 
         {activeTab === 'pets' && (
           <div className="space-y-4">
-            {activePets.map(pet => (
+            {displayedActivePets.map(pet => (
               <div key={pet.id} className="bg-white dark:bg-zinc-900 p-4 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4 cursor-pointer" onClick={() => onViewPet(pet)}>
                   {pet.images && pet.images.length > 0 ? (
@@ -341,36 +428,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
             ))}
+
+            {visibleLimits['pets'] < activePets.length && (
+              <div className="py-6 flex items-center justify-center">
+                 <div className="flex gap-2">
+                   <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce" />
+                   <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.15s]" />
+                   <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.3s]" />
+                 </div>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'users' && (
           <div className="space-y-4">
-            {owners.filter(o => !o.isAdmin).length === 0 ? (
+            {activeUsers.length === 0 ? (
                <div className="text-center py-20 text-gray-400 font-medium">
                  {t.noUsersFound}
                </div>
             ) : (
-              owners.filter(o => !o.isAdmin).map(owner => (
-                <div key={owner.id} className="bg-white dark:bg-zinc-900 p-4 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between">
-                  <div className="flex items-center gap-4 cursor-pointer" onClick={() => onViewUser(owner.id)}>
-                    <img src={owner.avatar} className="w-12 h-12 rounded-xl object-cover" alt={owner.name} referrerPolicy="no-referrer" />
-                    <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white text-sm">{owner.name}</h3>
+              <>
+                {displayedUsers.map(owner => (
+                  <div key={owner.id} className="bg-white dark:bg-zinc-900 p-4 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4 cursor-pointer" onClick={() => onViewUser(owner.id)}>
+                      <img src={owner.avatar} className="w-12 h-12 rounded-xl object-cover" alt={owner.name} referrerPolicy="no-referrer" />
+                      <div>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-sm">{owner.name}</h3>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); onViewUser(owner.id); }} className="p-2 text-gray-400 hover:text-[#e2a05e] transition-colors"><ChevronRight size={18} /></button>
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("[ADMIN-UI] Prompting delete for user:", owner.id);
+                        setDeleteTarget({ type: 'user', id: owner.id });
+                      }} className="p-2 text-red-400 hover:text-red-600 transition-colors">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); onViewUser(owner.id); }} className="p-2 text-gray-400 hover:text-[#e2a05e] transition-colors"><ChevronRight size={18} /></button>
-                    <button onClick={(e) => {
-                      e.stopPropagation();
-                      console.log("[ADMIN-UI] Prompting delete for user:", owner.id);
-                      setDeleteTarget({ type: 'user', id: owner.id });
-                    }} className="p-2 text-red-400 hover:text-red-600 transition-colors">
-                      <Trash2 size={18} />
-                    </button>
+                ))}
+
+                {visibleLimits['users'] < activeUsers.length && (
+                  <div className="py-6 flex items-center justify-center">
+                     <div className="flex gap-2">
+                       <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce" />
+                       <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.15s]" />
+                       <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.3s]" />
+                     </div>
                   </div>
-                </div>
-              ))
+                )}
+              </>
             )}
           </div>
         )}
@@ -382,6 +491,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             onMarkRead={onMarkInquiryRead}
             onDelete={onDeleteInquiry}
             currentUser={currentUser}
+            limit={visibleLimits['inquiries'] || 8}
           />
         )}
 
@@ -396,6 +506,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             onDeletePet={(id) => setDeleteTarget({ type: 'pet', id })}
             onDeleteUser={(id) => setDeleteTarget({ type: 'user', id })}
             currentUser={currentUser}
+            limit={visibleLimits['reports'] || 8}
           />
         )}
         {activeTab === 'message-reports' && (
@@ -406,6 +517,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             onDeleteReport={onDeleteMessageReport}
             onDeleteUser={(id) => setDeleteTarget({ type: 'user', id })}
             currentUser={currentUser}
+            limit={visibleLimits['message-reports'] || 8}
           />
         )}
       </div>

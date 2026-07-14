@@ -10,16 +10,18 @@ interface AdminInquiriesViewProps {
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
   currentUser: Owner;
+  limit?: number;
 }
 
 export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({ 
-  inquiries, owners, onMarkRead, onDelete, currentUser 
+  inquiries, owners, onMarkRead, onDelete, currentUser, limit
 }) => {
   const lang = currentUser.language || 'en';
   const t = translations[lang];
   const [selectedInquiry, setSelectedInquiry] = useState<SupportMessage | null>(null);
 
   const sortedInquiries = [...inquiries].sort((a, b) => b.timestamp - a.timestamp);
+  const displayedInquiries = limit ? sortedInquiries.slice(0, limit) : sortedInquiries;
 
   const handleOpenInquiry = (inq: SupportMessage) => {
     setSelectedInquiry(inq);
@@ -44,43 +46,55 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
             <p className="font-bold">{t.noInquiries}</p>
           </div>
         ) : (
-          sortedInquiries.map(inquiry => {
-            const sender = owners.find(o => o.id === inquiry.ownerId);
-            return (
-              <div 
-                key={inquiry.id} 
-                onClick={() => handleOpenInquiry(inquiry)}
-                className={`p-6 rounded-[32px] border transition-all duration-300 cursor-pointer active:scale-[0.98] ${
-                  inquiry.isRead 
-                    ? 'bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 opacity-60' 
-                    : 'bg-[#fdf2e9] dark:bg-[#e2a05e]/5 border-[#e2a05e]/20 shadow-lg shadow-[#e2a05e]/10'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <img src={sender?.avatar} className="w-10 h-10 rounded-full object-cover shadow-sm" alt={sender?.name} referrerPolicy="no-referrer" />
-                    <div>
-                      <p className="text-[10px] text-[#e2a05e] font-black uppercase tracking-widest">{t.from} {sender?.name}</p>
-                      <p className="text-[9px] text-gray-400 font-bold">{new Date(inquiry.timestamp).toLocaleString()}</p>
+          <>
+            {displayedInquiries.map(inquiry => {
+              const sender = owners.find(o => o.id === inquiry.ownerId);
+              return (
+                <div 
+                  key={inquiry.id} 
+                  onClick={() => handleOpenInquiry(inquiry)}
+                  className={`p-6 rounded-[32px] border transition-all duration-300 cursor-pointer active:scale-[0.98] ${
+                    inquiry.isRead 
+                      ? 'bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 opacity-60' 
+                      : 'bg-[#fdf2e9] dark:bg-[#e2a05e]/5 border-[#e2a05e]/20 shadow-lg shadow-[#e2a05e]/10'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <img src={sender?.avatar} className="w-10 h-10 rounded-full object-cover shadow-sm" alt={sender?.name} referrerPolicy="no-referrer" />
+                      <div>
+                        <p className="text-[10px] text-[#e2a05e] font-black uppercase tracking-widest">{t.from} {sender?.name}</p>
+                        <p className="text-[9px] text-gray-400 font-bold">{new Date(inquiry.timestamp).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                      <button 
+                        onClick={() => onDelete(inquiry.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                    <button 
-                      onClick={() => onDelete(inquiry.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+
+                  <div className="space-y-2">
+                    <h3 className={`text-base font-bold text-gray-900 dark:text-white leading-tight ${!inquiry.isRead ? 'font-black' : ''}`}>{inquiry.subject}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 italic">{inquiry.message}</p>
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <h3 className={`text-base font-bold text-gray-900 dark:text-white leading-tight ${!inquiry.isRead ? 'font-black' : ''}`}>{inquiry.subject}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 italic">{inquiry.message}</p>
-                </div>
+              );
+            })}
+            
+            {limit && limit < sortedInquiries.length && (
+              <div className="py-6 flex items-center justify-center">
+                 <div className="flex gap-2">
+                   <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce" />
+                   <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.15s]" />
+                   <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce [animation-delay:-0.3s]" />
+                 </div>
               </div>
-            );
-          })
+            )}
+          </>
         )}
       </div>
 

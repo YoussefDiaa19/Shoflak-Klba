@@ -29,7 +29,7 @@ import { Pet, View, PetType, Chat, Owner, Filters, Message, PetStatus, SupportMe
 import { supabase } from './supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { translations } from './translations';
-import { X, Loader2, PawPrint } from 'lucide-react';
+import { X, Loader2, PawPrint, ArrowRight } from 'lucide-react';
 import { storage } from './preferences';
 
 const PAGE_SIZE = 8;
@@ -2387,6 +2387,7 @@ const App: React.FC = () => {
         <div className="w-full min-h-full" style={{ display: isRootView && activeRootTab === 'admin-dashboard' ? 'block' : 'none' }}>
             {currentUser?.isAdmin && (
               <AdminDashboard
+                isVisible={isRootView && activeRootTab === 'admin-dashboard'}
                 pets={allKnownPets}
                 owners={allOwners}
                 inquiries={adminInquiries}
