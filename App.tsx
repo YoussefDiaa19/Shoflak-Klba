@@ -192,7 +192,12 @@ const VIEW_ORDER: Record<string, number> = {
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<Owner | null>(null);
-  const [view, setView] = useState<View>('home');
+  const [view, setViewInternal] = useState<View>('home');
+  const isTransitioning = useRef(false);
+  const setView = useCallback((newView: View | ((prev: View) => View)) => {
+    isTransitioning.current = true;
+    setViewInternal(newView);
+  }, []);
   const [history, setHistory] = useState<View[]>([]);
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for back
   const [profileMenuInitial, setProfileMenuInitial] = useState(false);
@@ -2002,7 +2007,6 @@ const App: React.FC = () => {
     return Array.from(new Map(combined.map(p => [p.id, p])).values());
   }, [homePets, favPets, otherPets, adminPets]);
 
-  const isTransitioning = useRef(false);
   const handleScroll = useCallback((top: number) => {
     if (!isTransitioning.current) {
       scrollPositions.current[view] = top;

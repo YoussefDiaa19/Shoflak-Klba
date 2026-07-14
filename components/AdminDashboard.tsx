@@ -186,6 +186,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!main) return;
 
     const handleMainScroll = () => {
+      const rootEl = document.getElementById('admin-dashboard-root');
+      if (rootEl && rootEl.getBoundingClientRect().height === 0) {
+        return; // Ignore scroll events when hidden/collapsed
+      }
       tabScrollPositions.current[activeTab] = main.scrollTop;
       const { scrollTop, scrollHeight, clientHeight } = main;
       if (scrollHeight - scrollTop - clientHeight < 200) {
@@ -243,7 +247,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] flex flex-col animate-in fade-in duration-500 pb-24">
+    <div id="admin-dashboard-root" className="min-h-screen bg-gray-50 dark:bg-[#1a1a1a] flex flex-col animate-in fade-in duration-500 pb-24">
       {/* Header */}
       <div className={`p-6 bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-between sticky top-0 z-10 border-b dark:border-zinc-800 ${isIOS ? 'pt-[calc(1.5rem+env(safe-area-inset-top))]' : ''}`}>
         <div className="flex items-center gap-3">
