@@ -52,7 +52,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   const navItems = currentUser?.isAdmin 
     ? [
         { id: 'admin-dashboard', icon: LayoutDashboard, label: t.home },
-        { id: 'admin-inquiries', icon: Mail, label: t.inquiries, badgeCount: 0 },
         { id: 'profile', icon: User, label: t.settings },
       ]
     : [

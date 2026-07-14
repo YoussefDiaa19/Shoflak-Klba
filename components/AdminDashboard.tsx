@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Pet, Owner, SupportMessage, PetReport, MessageReport } from '../types';
 import { translations } from '../translations';
 import { Check, X, ShieldAlert, LogOut, Users, Package, Clock, MapPin, Trash2, PieChart, RefreshCw, AlertTriangle, ChevronRight, Mail, Flag, MessageSquare, Megaphone, Bell } from 'lucide-react';
@@ -122,7 +122,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isIOS = useMemo(() => Capacitor.getPlatform() === 'ios', []);
-  const contentRef = useRef<HTMLDivElement>(null);
   const tabScrollPositions = useRef<Record<string, number>>({});
 
   const [visibleLimits, setVisibleLimits] = useState<Record<string, number>>({
@@ -135,18 +134,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
 
   // Restore scroll positions when tab changes or dashboard becomes visible
-  useEffect(() => {
-    if (isVisible) {
-      const savedScroll = tabScrollPositions.current[activeTab] || 0;
-      const timeoutId = setTimeout(() => {
-        if (contentRef.current) {
-          contentRef.current.scrollTop = savedScroll;
-        }
-      }, 30);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isVisible, activeTab]);
-
   const activeUsers = useMemo(() => owners.filter(o => !o.isAdmin), [owners]);
 
   // Directly filter based on trusted sanitized data from App.tsx
@@ -167,7 +154,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return activeUsers.slice(0, visibleLimits['users'] || 8);
   }, [activeUsers, visibleLimits['users']]);
 
-  const loadMoreForActiveTab = () => {
+  const loadMoreForActiveTab = useCallback(() => {
     const currentLimit = visibleLimits[activeTab];
     if (currentLimit === undefined) return;
 
@@ -185,16 +172,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         [activeTab]: prev[activeTab] + 8
       }));
     }
-  };
+  }, [activeTab, visibleLimits, pendingPets.length, activePets.length, activeUsers.length, inquiries.length, reports.length, messageReports.length]);
 
-  const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    tabScrollPositions.current[activeTab] = e.currentTarget.scrollTop;
+  const loadMoreRef = useRef(loadMoreForActiveTab);
+  useEffect(() => {
+    loadMoreRef.current = loadMoreForActiveTab;
+  }, [loadMoreForActiveTab]);
 
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop - clientHeight < 150) {
-      loadMoreForActiveTab();
+  // Handle scroll events directly on #app-main (the application's scrolling container)
+  useEffect(() => {
+    if (!isVisible) return;
+    const main = document.getElementById('app-main');
+    if (!main) return;
+
+    const handleMainScroll = () => {
+      tabScrollPositions.current[activeTab] = main.scrollTop;
+      const { scrollTop, scrollHeight, clientHeight } = main;
+      if (scrollHeight - scrollTop - clientHeight < 200) {
+        loadMoreRef.current();
+      }
+    };
+
+    main.addEventListener('scroll', handleMainScroll, { passive: true });
+    return () => main.removeEventListener('scroll', handleMainScroll);
+  }, [isVisible, activeTab]);
+
+  // Restore sub-tab scroll position when activeTab changes or dashboard becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      const main = document.getElementById('app-main');
+      if (!main) return;
+      const savedScroll = tabScrollPositions.current[activeTab] || 0;
+      
+      const timeoutId = setTimeout(() => {
+        if (main) {
+          main.scrollTop = savedScroll;
+        }
+      }, 30);
+      return () => clearTimeout(timeoutId);
     }
-  };
+  }, [isVisible, activeTab]);
   
   const handleRefresh = async () => {
     console.log("[ADMIN] Manually refreshing global data...");
@@ -280,11 +297,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ))}
       </div>
 
-      <div 
-        ref={contentRef}
-        onScroll={handleContentScroll}
-        className="flex-1 p-6 overflow-y-auto"
-      >
+      <div className="flex-1 p-6">
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
