@@ -44,9 +44,11 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera so you can take photos of your pets.</string>
+	<string>We need access to your camera so you can capture and upload photos of your pets for listings, posts, and messaging.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to pick images of your pets.</string>
+	<string>We need access to your photo library to select and upload photos of your pets for adoption listings, profile customization, and chat messages.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save pet photos and chat attachments directly to your photo library.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
