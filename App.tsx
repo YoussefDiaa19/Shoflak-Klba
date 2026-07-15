@@ -335,7 +335,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       const listener = CapacitorApp.addListener('appUrlOpen', async (data) => {
-        if (data.url.includes('/auth/callback') || data.url.includes('#access_token=') || data.url.includes('code=')) {
+        if (data.url.includes('auth/callback') || data.url.includes('#access_token=') || data.url.includes('code=')) {
           console.log("App opened with auth callback URL:", data.url);
           
           try {
@@ -408,7 +408,8 @@ const App: React.FC = () => {
       console.log(`Mobile redirect schemes:`, schemes);
       
       const primaryScheme = schemes[0];
-      const primaryUrl = `${primaryScheme}://${appPath}`;
+      const cleanPath = appPath.startsWith('/') ? appPath.slice(1) : appPath;
+      const primaryUrl = `${primaryScheme}://${cleanPath}`;
       setRedirectUrl(primaryUrl);
       setIsRedirectingToApp(true);
       
@@ -417,12 +418,12 @@ const App: React.FC = () => {
       
       setTimeout(() => {
         const secondaryScheme = schemes[1] || schemes[0];
-        window.location.href = `${secondaryScheme}://${appPath}`;
+        window.location.href = `${secondaryScheme}://${cleanPath}`;
       }, 400);
 
       setTimeout(() => {
         const tertiaryScheme = schemes[2] || schemes[0];
-        window.location.href = `${tertiaryScheme}://${appPath}`;
+        window.location.href = `${tertiaryScheme}://${cleanPath}`;
       }, 800);
       
       return;

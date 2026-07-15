@@ -85,18 +85,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
       try {
         console.log("Triggering native Apple sign in...");
         const result = await SignInWithApple.authorize({
-          clientId: 'com.shoflakklba.app.PUV3DTN3CN', // Correct Services ID on iOS
+          clientId: 'com.shoflakklba.app', // Correct native Bundle ID on iOS (NOT the Services ID)
           redirectURI: 'https://pgkbzeixrtcehbfemsqe.supabase.co/auth/v1/callback',
           scopes: 'email name',
         });
 
         if (result.response && result.response.identityToken) {
+          console.log("Native Apple sign in success! Exchanging token with Supabase...");
           const { data, error } = await supabase.auth.signInWithIdToken({
             provider: 'apple',
             token: result.response.identityToken
           });
           if (error) throw error;
           if (data?.user) {
+            console.log("Supabase exchange success for native Apple login!");
             setIsSubmitting(false);
             return;
           }
@@ -104,7 +106,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No Identity Token received from Apple native login");
         }
       } catch (err: any) {
-        console.warn("Native Apple Login failed, falling back to Web-Intercepted OAuth:", err);
+        console.warn("Native Apple Login failed with error details:", err);
         // Do not return here, fall through to web flow if native fails
       }
     }
@@ -134,8 +136,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
     }
 
     // WEB / FALLBACK FLOW
+    let redirectTo = '';
     const baseOrigin = window.location.origin.endsWith('/') ? window.location.origin.slice(0, -1) : window.location.origin;
-    const redirectTo = `${baseOrigin}/auth/callback`;
+    
+    if (isNative) {
+      // On native mobile platforms, Supabase handles the provider's HTTPS redirect 
+      // and then redirects to our app's custom scheme.
+      redirectTo = 'com.shoflakklba.app://auth/callback';
+    } else {
+      redirectTo = `${baseOrigin}/auth/callback`;
+    }
     
     console.log("Initiating OAuth login with redirect to:", redirectTo);
     console.log("Make sure this URL is in your Supabase Redirect URLs list!");
