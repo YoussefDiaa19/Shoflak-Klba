@@ -29,7 +29,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.shoflakklba" />
+                <data android:scheme="com.shoflakklba.app" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -41,13 +41,13 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.shoflakklba.PUV3DTN3CN" />
+                <data android:scheme="com.shoflakklba.app.PUV3DTN3CN" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.shoflakklba.puv3dtn3cn" />
+                <data android:scheme="com.shoflakklba.app.puv3dtn3cn" />
             </intent-filter>
         </activity>
 
