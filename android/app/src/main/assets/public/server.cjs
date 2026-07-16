@@ -214,9 +214,47 @@ async function startServer() {
                 }
               }
             } else {
-              console.log("No window opener detected. Redirecting to home...");
-              status.innerText = "No parent window detected. Redirecting...";
-              window.location.href = '/';
+              // 1. Mobile-specific redirection handler for OAuth callback when opened in Safari View Controller or Chrome Custom Tab
+              const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+              
+              if (isMobileDevice && (hash.includes('access_token') || search.includes('code='))) {
+                console.log("No window opener, but on mobile device with tokens. Redirecting to app...");
+                status.innerHTML = "<h3>Login successful!</h3><p>Redirecting you back to Shoflak Klba app...</p>";
+                
+                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                const schemes = isIOS 
+                  ? ['shoflakklba', 'com.shoflakklba.app', 'com.shoflakklba', 'com.shoflakklba.app.PUV3DTN3CN', 'com.shoflakklba.app.puv3dtn3cn']
+                  : ['shoflakklba', 'com.shoflakklba', 'com.shoflakklba.app'];
+                  
+                const cleanPath = "auth/callback" + search + hash;
+                
+                // Show a manual redirect button immediately in case browser blocks automatic deep-linking
+                closeBtn.style.display = "block";
+                closeBtn.innerText = "Open App / \u0641\u062A\u062D \u0627\u0644\u062A\u0637\u0628\u064A\u0642";
+                closeBtn.style.background = "#e2a05e";
+                closeBtn.onclick = () => {
+                  window.location.href = schemes[0] + "://" + cleanPath;
+                };
+                
+                // Attempt automatic redirection across available schemes in sequence
+                let currentAttempt = 0;
+                function attemptAutoRedirect() {
+                  if (currentAttempt < schemes.length) {
+                    const nextSchemeUrl = schemes[currentAttempt] + "://" + cleanPath;
+                    console.log("Trying custom scheme redirect:", nextSchemeUrl);
+                    window.location.href = nextSchemeUrl;
+                    currentAttempt++;
+                    setTimeout(attemptAutoRedirect, 500);
+                  }
+                }
+                
+                // Start redirecting
+                attemptAutoRedirect();
+              } else {
+                console.log("No window opener detected and not mobile with tokens. Redirecting to home...");
+                status.innerText = "No parent window detected. Redirecting to home...";
+                window.location.href = '/' + search + hash;
+              }
             }
           </script>
         </body>

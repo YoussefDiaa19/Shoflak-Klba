@@ -46,24 +46,44 @@ post_install do |installer|
     <key>NSPrivacyCollectedDataTypes</key>
     <array/>
     <key>NSPrivacyAccessedAPITypes</key>
-    <array/>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>
   XML
 
-  installer.pods_project.targets.each do |target|
-    if ['GoogleSignIn', 'GTMAppAuth', 'GTMSessionFetcher'].include?(target.name)
-      require 'fileutils'
-      FileUtils.mkdir_p(target.support_files_dir)
-      privacy_file_path = File.join(target.support_files_dir, 'PrivacyInfo.xcprivacy')
-      File.write(privacy_file_path, privacy_content)
+  File.write('App/PrivacyInfo.xcprivacy', privacy_content)
+
+  project = installer.aggregate_targets.first.user_project
+  app_target = project.targets.find { |t| t.name == 'App' }
+  
+  if app_target
+    script_name = "Inject Privacy Manifests to SDKs"
+    unless app_target.shell_script_build_phases.any? { |bp| bp.name == script_name }
+      script_phase = project.new(Xcodeproj::Project::Object::PBXShellScriptBuildPhase)
+      script_phase.name = script_name
+      script_phase.shell_script = <<-SCRIPT
+PRIVACY_FILE="${SRCROOT}/App/PrivacyInfo.xcprivacy"
+
+for framework in "GoogleSignIn" "GTMAppAuth" "GTMSessionFetcher"; do
+  FRAMEWORK_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/${framework}.framework"
+  if [ -d "$FRAMEWORK_DIR" ]; then
+    echo "Copying PrivacyInfo.xcprivacy to ${framework}.framework"
+    cp "$PRIVACY_FILE" "$FRAMEWORK_DIR/PrivacyInfo.xcprivacy"
+  fi
+done
+      SCRIPT
       
-      group = installer.pods_project.main_group.find_subpath(target.name, true)
-      file_ref = group.new_reference(privacy_file_path)
-      
-      if target.resources_build_phase
-        target.resources_build_phase.add_file_reference(file_ref, true)
-      end
+      app_target.build_phases << script_phase
+      project.save
     end
   end
 end
