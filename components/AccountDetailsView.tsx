@@ -121,7 +121,7 @@ export const AccountDetailsView: React.FC<AccountDetailsViewProps> = ({ owner, o
             <div className="w-32 h-32 rounded-[40px] border-[3px] border-white dark:border-zinc-800 shadow-xl overflow-hidden relative bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">
               {editForm.avatar ? (
                 <img 
-                  src={editForm.avatar} 
+                  src={editForm.avatar || undefined} 
                   className={`w-full h-full object-cover transition-opacity ${isCompressing ? 'opacity-30' : 'opacity-100 group-hover:opacity-90'}`} 
                   alt="Avatar"
                   referrerPolicy="no-referrer"

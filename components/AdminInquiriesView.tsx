@@ -61,7 +61,7 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                      <img src={sender?.avatar} className="w-10 h-10 rounded-full object-cover shadow-sm" alt={sender?.name} referrerPolicy="no-referrer" />
+                      <img src={sender?.avatar || undefined} className="w-10 h-10 rounded-full object-cover shadow-sm" alt={sender?.name} referrerPolicy="no-referrer" />
                       <div>
                         <p className="text-[10px] text-[#e2a05e] font-black uppercase tracking-widest">{t.from} {sender?.name}</p>
                         <p className="text-[9px] text-gray-400 font-bold">{new Date(inquiry.timestamp).toLocaleString()}</p>
@@ -116,7 +116,7 @@ export const AdminInquiriesView: React.FC<AdminInquiriesViewProps> = ({
             
             <div className="p-8 overflow-y-auto space-y-8">
               <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded-3xl border border-gray-100 dark:border-zinc-700">
-                <img src={owners.find(o => o.id === selectedInquiry.ownerId)?.avatar} className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" />
+                <img src={owners.find(o => o.id === selectedInquiry.ownerId)?.avatar || undefined} className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" />
                 <div>
                   <h4 className="font-bold text-gray-900 dark:text-white text-lg">{owners.find(o => o.id === selectedInquiry.ownerId)?.name}</h4>
                   <p className="text-xs text-gray-400 font-bold">{new Date(selectedInquiry.timestamp).toLocaleString()}</p>

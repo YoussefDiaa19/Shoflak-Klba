@@ -64,7 +64,7 @@ export const OwnerProfile: React.FC<OwnerProfileProps> = ({ ownerId, pets, onBac
           {isLoading ? (
             <Skeleton className="w-32 h-32 rounded-[48px]" />
           ) : (
-            <img src={owner?.avatar} className="w-32 h-32 rounded-[48px] border-4 border-[#fdf2e9] dark:border-zinc-800 shadow-xl object-cover" alt={owner?.name} referrerPolicy="no-referrer" />
+            <img src={owner?.avatar || undefined} className="w-32 h-32 rounded-[48px] border-4 border-[#fdf2e9] dark:border-zinc-800 shadow-xl object-cover" alt={owner?.name} referrerPolicy="no-referrer" />
           )}
           <div className="text-center w-full space-y-2">
             {isLoading ? (
@@ -116,7 +116,7 @@ export const OwnerProfile: React.FC<OwnerProfileProps> = ({ ownerId, pets, onBac
                     onClick={() => onPetClick(pet)}
                     className="relative rounded-[28px] overflow-hidden shadow-md group border border-gray-100 dark:border-zinc-800 active:scale-95 transition-transform"
                   >
-                    <img src={pet.images[0]} className="w-full aspect-[4/5] object-cover" alt={pet.name} referrerPolicy="no-referrer" />
+                    <img src={pet.images[0] || undefined} className="w-full aspect-[4/5] object-cover" alt={pet.name} referrerPolicy="no-referrer" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-3 left-4">
                       <p className="text-white font-bold">{pet.name}, {pet.age}</p>

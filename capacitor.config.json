@@ -23,6 +23,10 @@
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
     },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnVirtualKeyboardShown": true
+    },
     "GoogleAuth": {
       "scopes": ["profile", "email"],
       "serverClientId": "245649293558-skjl5k1cb5q49slpav7agoleqdp9mlft.apps.googleusercontent.com",

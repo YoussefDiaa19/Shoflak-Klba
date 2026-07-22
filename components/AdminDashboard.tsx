@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Pet, Owner, SupportMessage, PetReport, MessageReport } from '../types';
 import { translations } from '../translations';
-import { Check, X, ShieldAlert, LogOut, Users, Package, Clock, MapPin, Trash2, PieChart, RefreshCw, AlertTriangle, ChevronRight, Mail, Flag, MessageSquare, Megaphone, Bell } from 'lucide-react';
+import { Check, X, ShieldAlert, LogOut, Users, Package, Clock, MapPin, Trash2, PieChart, RefreshCw, AlertTriangle, ChevronRight, Mail, Flag, MessageSquare, Megaphone, Bell, Search } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 
 import { AdminInquiriesView } from './AdminInquiriesView';
@@ -136,23 +136,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Restore scroll positions when tab changes or dashboard becomes visible
   const activeUsers = useMemo(() => owners.filter(o => !o.isAdmin), [owners]);
 
+  const [petSearchQuery, setPetSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+
   // Directly filter based on trusted sanitized data from App.tsx
   const activePets = useMemo(() => pets.filter(p => p.status !== 'deleted'), [pets]);
   const pendingPets = useMemo(() => activePets.filter(p => p.status === 'pending'), [activePets]);
   const approvedPets = useMemo(() => activePets.filter(p => p.status === 'approved'), [activePets]);
   const rejectedPets = useMemo(() => activePets.filter(p => p.status === 'rejected'), [activePets]);
 
+  const filteredPets = useMemo(() => {
+    if (!petSearchQuery.trim()) return activePets;
+    const q = petSearchQuery.toLowerCase();
+    return activePets.filter(p => 
+      (p.name && p.name.toLowerCase().includes(q)) || 
+      (p.breed && p.breed.toLowerCase().includes(q)) || 
+      (p.type && p.type.toLowerCase().includes(q)) || 
+      (p.location && p.location.toLowerCase().includes(q)) ||
+      (p.status && p.status.toLowerCase().includes(q))
+    );
+  }, [activePets, petSearchQuery]);
+
+  const filteredUsers = useMemo(() => {
+    if (!userSearchQuery.trim()) return activeUsers;
+    const q = userSearchQuery.toLowerCase();
+    return activeUsers.filter(u => 
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.phone && u.phone.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.city && u.city.toLowerCase().includes(q)) ||
+      (u.area && u.area.toLowerCase().includes(q))
+    );
+  }, [activeUsers, userSearchQuery]);
+
   const displayedPendingPets = useMemo(() => {
     return pendingPets.slice(0, visibleLimits['pending'] || 8);
   }, [pendingPets, visibleLimits['pending']]);
 
   const displayedActivePets = useMemo(() => {
-    return activePets.slice(0, visibleLimits['pets'] || 8);
-  }, [activePets, visibleLimits['pets']]);
+    return filteredPets.slice(0, visibleLimits['pets'] || 8);
+  }, [filteredPets, visibleLimits['pets']]);
 
   const displayedUsers = useMemo(() => {
-    return activeUsers.slice(0, visibleLimits['users'] || 8);
-  }, [activeUsers, visibleLimits['users']]);
+    return filteredUsers.slice(0, visibleLimits['users'] || 8);
+  }, [filteredUsers, visibleLimits['users']]);
 
   const loadMoreForActiveTab = useCallback(() => {
     const currentLimit = visibleLimits[activeTab];
@@ -380,7 +407,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div key={pet.id} className="bg-white dark:bg-zinc-900 p-5 rounded-[32px] border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer w-full" onClick={() => onViewPet(pet)}>
                       {pet.images && pet.images.length > 0 ? (
-                        <img src={pet.images[0]} className="w-16 h-16 rounded-2xl object-cover shadow-sm shrink-0" alt={pet.name} referrerPolicy="no-referrer" />
+                        <img src={pet.images[0] || undefined} className="w-16 h-16 rounded-2xl object-cover shadow-sm shrink-0" alt={pet.name} referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
                           <Package size={24} className="text-gray-400" />
@@ -418,35 +445,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {activeTab === 'pets' && (
           <div className="space-y-4">
-            {displayedActivePets.map(pet => (
-              <div key={pet.id} className="bg-white dark:bg-zinc-900 p-4 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-4 cursor-pointer" onClick={() => onViewPet(pet)}>
-                  {pet.images && pet.images.length > 0 ? (
-                    <img src={pet.images[0]} className="w-12 h-12 rounded-xl object-cover" alt={pet.name} referrerPolicy="no-referrer" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                      <Package size={20} className="text-gray-400" />
+            <div className="relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={petSearchQuery}
+                onChange={(e) => setPetSearchQuery(e.target.value)}
+                placeholder={lang === 'ar' ? "البحث عن أليف بالأسم أو السلالة أو الموقع..." : "Search pets by name, breed, location..."}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl pl-11 pr-10 py-3.5 text-sm text-gray-900 dark:text-white outline-none focus:border-[#e2a05e]"
+              />
+              {petSearchQuery && (
+                <button onClick={() => setPetSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {displayedActivePets.length === 0 ? (
+              <div className="text-center py-16 text-gray-400 font-medium">
+                {lang === 'ar' ? "لم يتم العثور على أليفين" : "No pets found"}
+              </div>
+            ) : (
+              displayedActivePets.map(pet => (
+                <div key={pet.id} className="bg-white dark:bg-zinc-900 p-4 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+                  <div className="flex items-center gap-4 cursor-pointer" onClick={() => onViewPet(pet)}>
+                    {pet.images && pet.images.length > 0 ? (
+                      <img src={pet.images[0] || undefined} className="w-12 h-12 rounded-xl object-cover" alt={pet.name} referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                        <Package size={20} className="text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-bold text-gray-900 dark:text-white text-sm">{pet.name}</h3>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase">{pet.breed} • {pet.status}</p>
                     </div>
-                  )}
-                  <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">{pet.name}</h3>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">{pet.status}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={(e) => { e.stopPropagation(); onViewPet(pet); }} className="p-2 text-gray-400 hover:text-[#e2a05e] transition-colors"><ChevronRight size={18} /></button>
+                    <button onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("[ADMIN-UI] Prompting delete for pet:", pet.id);
+                      setDeleteTarget({ type: 'pet', id: pet.id });
+                    }} className="p-2 text-red-400 hover:text-red-600 transition-colors">
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); onViewPet(pet); }} className="p-2 text-gray-400 hover:text-[#e2a05e] transition-colors"><ChevronRight size={18} /></button>
-                  <button onClick={(e) => {
-                    e.stopPropagation();
-                    console.log("[ADMIN-UI] Prompting delete for pet:", pet.id);
-                    setDeleteTarget({ type: 'pet', id: pet.id });
-                  }} className="p-2 text-red-400 hover:text-red-600 transition-colors">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
 
-            {visibleLimits['pets'] < activePets.length && (
+            {visibleLimits['pets'] < filteredPets.length && (
               <div className="py-6 flex items-center justify-center">
                  <div className="flex gap-2">
                    <div className="w-2 h-2 rounded-full bg-[#e2a05e] animate-bounce" />
@@ -460,8 +509,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {activeTab === 'users' && (
           <div className="space-y-4">
-            {activeUsers.length === 0 ? (
-               <div className="text-center py-20 text-gray-400 font-medium">
+            <div className="relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                placeholder={lang === 'ar' ? "البحث عن مستخدم بالمصنع أو الاسم أو الهاتف..." : "Search users by name, phone, email..."}
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl pl-11 pr-10 py-3.5 text-sm text-gray-900 dark:text-white outline-none focus:border-[#e2a05e]"
+              />
+              {userSearchQuery && (
+                <button onClick={() => setUserSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {displayedUsers.length === 0 ? (
+               <div className="text-center py-16 text-gray-400 font-medium">
                  {t.noUsersFound}
                </div>
             ) : (
@@ -469,9 +534,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {displayedUsers.map(owner => (
                   <div key={owner.id} className="bg-white dark:bg-zinc-900 p-4 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between">
                     <div className="flex items-center gap-4 cursor-pointer" onClick={() => onViewUser(owner.id)}>
-                      <img src={owner.avatar} className="w-12 h-12 rounded-xl object-cover" alt={owner.name} referrerPolicy="no-referrer" />
+                      <img src={owner.avatar || undefined} className="w-12 h-12 rounded-xl object-cover" alt={owner.name} referrerPolicy="no-referrer" />
                       <div>
                         <h3 className="font-bold text-gray-900 dark:text-white text-sm">{owner.name}</h3>
+                        {owner.phone && <p className="text-xs text-gray-400">{owner.phone}</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

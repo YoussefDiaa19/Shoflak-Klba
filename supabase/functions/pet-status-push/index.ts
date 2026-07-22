@@ -57,6 +57,9 @@ serve(async (req) => {
           return new Response("User has no FCM token saved, silently ignoring.", { status: 200 });
         }
 
+        const rawToken = String(recipientProfile.fcm_token);
+        const fcmToken = rawToken.includes('|') ? rawToken.split('|')[0] : rawToken;
+
         const title = newRecord.status === 'approved' ? 'Pet Approved! 🎉' : 'Pet Rejected';
         const body = newRecord.status === 'approved' 
           ? `Great news! ${petName} is now live and visible to everyone.` 
@@ -65,7 +68,7 @@ serve(async (req) => {
         console.log(`6. Attempting send to Firebase with title: "${title}"`);
         try {
           const response = await getMessaging().send({
-            token: recipientProfile.fcm_token,
+            token: fcmToken,
             android: {
               notification: {
                 channelId: 'default',

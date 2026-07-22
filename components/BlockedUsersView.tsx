@@ -51,7 +51,7 @@ export const BlockedUsersView: React.FC<BlockedUsersViewProps> = ({ blockedIds, 
           blockedOwners.map(owner => (
             <div key={owner.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-700 animate-in fade-in slide-in-from-bottom-2">
               <div className="flex items-center gap-4">
-                <img src={owner.avatar} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={owner.name} referrerPolicy="no-referrer" />
+                <img src={owner.avatar || undefined} className="w-12 h-12 rounded-xl object-cover shadow-sm" alt={owner.name} referrerPolicy="no-referrer" />
                 <div>
                   <h3 className="font-bold text-gray-900 dark:text-white">{owner.name}</h3>
                 </div>

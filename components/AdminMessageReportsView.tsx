@@ -140,7 +140,7 @@ export const AdminMessageReportsView: React.FC<AdminMessageReportsViewProps> = (
                       {msg.type === 'image' && msg.imageUrls && msg.imageUrls.length > 0 ? (
                         <div className="grid grid-cols-2 gap-1 mb-1">
                           {msg.imageUrls.slice(0, 4).map((url, i) => (
-                            <img key={i} src={url} alt="Reported" className="rounded-lg w-full h-20 object-cover border border-red-100 cursor-pointer hover:opacity-80 transition-opacity" onClick={(e) => { e.stopPropagation(); setLightboxImage(url); }} referrerPolicy="no-referrer" />
+                            <img key={i} src={url || undefined} alt="Reported" className="rounded-lg w-full h-20 object-cover border border-red-100 cursor-pointer hover:opacity-80 transition-opacity" onClick={(e) => { e.stopPropagation(); setLightboxImage(url); }} referrerPolicy="no-referrer" />
                           ))}
                         </div>
                       ) : (
@@ -220,7 +220,7 @@ export const AdminMessageReportsView: React.FC<AdminMessageReportsViewProps> = (
                   {msg.type === 'image' && msg.imageUrls && msg.imageUrls.length > 0 ? (
                     <div className="space-y-1 mb-1">
                       {msg.imageUrls.map((url, i) => (
-                        <img key={i} src={url} alt="Reported" className="rounded-lg w-full max-h-60 object-cover border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" onClick={(e) => { e.stopPropagation(); setLightboxImage(url); }} referrerPolicy="no-referrer" />
+                        <img key={i} src={url || undefined} alt="Reported" className="rounded-lg w-full max-h-60 object-cover border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity" onClick={(e) => { e.stopPropagation(); setLightboxImage(url); }} referrerPolicy="no-referrer" />
                       ))}
                     </div>
                   ) : (
@@ -237,7 +237,7 @@ export const AdminMessageReportsView: React.FC<AdminMessageReportsViewProps> = (
 
       {lightboxImage && (
         <div className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setLightboxImage(null)}>
-          <img src={lightboxImage} alt="Fullscreen" className="max-w-full max-h-full object-contain rounded-lg animate-in zoom-in duration-300" referrerPolicy="no-referrer" />
+          <img src={lightboxImage || undefined} alt="Fullscreen" className="max-w-full max-h-full object-contain rounded-lg animate-in zoom-in duration-300" referrerPolicy="no-referrer" />
           <button 
             onClick={() => setLightboxImage(null)}
             className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"

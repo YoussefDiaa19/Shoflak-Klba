@@ -384,6 +384,18 @@ const App: React.FC = () => {
               }
             }
           }
+
+          // Force auth state check to avoid stuck "connecting..." screen
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await handleAuthChange(user);
+            } else {
+              await handleAuthCheck();
+            }
+          } catch (e) {
+            console.error("Error refreshing auth after deep link:", e);
+          }
         }
       });
       return () => {
@@ -459,6 +471,7 @@ const App: React.FC = () => {
   const currentUserRef = useRef<Owner | null>(null);
   const allOwnersRef = useRef<Owner[]>([]);
   const chatsRef = useRef<Chat[]>([]);
+  const rawFcmTokenRef = useRef<string | null>(null);
 
   const scrollPositions = useRef<Record<string, number>>({});
   const lastFavSearchRef = useRef('');
@@ -475,6 +488,37 @@ const App: React.FC = () => {
   }, [currentUser]);
   useEffect(() => { selectedChatIdRef.current = selectedChatId; }, [selectedChatId]);
   useEffect(() => { allOwnersRef.current = allOwners; }, [allOwners]);
+
+  // Synchronize active chat state into FCM token in DB so chat-push edge function suppresses notifications when inside chat
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    const userId = currentUser.id;
+
+    const tokenFromUser = currentUser.fcmToken ? (currentUser.fcmToken.includes('|') ? currentUser.fcmToken.split('|')[0] : currentUser.fcmToken) : null;
+    const rawToken = rawFcmTokenRef.current || tokenFromUser;
+
+    if (!rawToken) return;
+    rawFcmTokenRef.current = rawToken;
+
+    const activeChat = (view === 'chat-room' && selectedChatId) ? selectedChatId : null;
+    const tokenToSave = activeChat ? `${rawToken}|${activeChat}` : rawToken;
+
+    supabase.from('profiles').update({ fcm_token: tokenToSave }).eq('id', userId).then(({ error }) => {
+      if (error) console.error("Error updating active chat token in DB:", error);
+    });
+
+    const handleVisibilityChange = () => {
+      const isVisible = document.visibilityState === 'visible';
+      const currentActiveChat = (isVisible && viewRef.current === 'chat-room' && selectedChatIdRef.current) ? selectedChatIdRef.current : null;
+      const newToken = currentActiveChat ? `${rawToken}|${currentActiveChat}` : rawToken;
+      supabase.from('profiles').update({ fcm_token: newToken }).eq('id', userId);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentUser?.id, view, selectedChatId]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -550,6 +594,12 @@ const App: React.FC = () => {
   }, [view, goBack]);
 
   useEffect(() => {
+    if (['home', 'chats', 'favorites', 'profile', 'admin-dashboard'].includes(view)) {
+      setSelectedPet(null);
+    }
+  }, [view]);
+
+  useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 3000);
       return () => clearTimeout(timer);
@@ -564,9 +614,6 @@ const App: React.FC = () => {
   const isFetchingHomeRef = useRef(false);
   const fetchHomePets = useCallback(async (reset: boolean = false, customFilters?: Filters) => {
     if (isFetchingHomeRef.current && !reset) return;
-    
-    // If we are already fetching a reset, don't start another reset fetch simultaneously
-    if (reset && isFetchingHomeRef.current) return;
 
     isFetchingHomeRef.current = true;
 
@@ -586,17 +633,17 @@ const App: React.FC = () => {
       setPage(0);
       pageRef.current = 0;
       setHasMore(true);
-      // Only clear if we don't have cached data to show, to prevent flickering
       if (homePetsRef.current.length === 0) {
-        setHomePets([]);
         setIsDataLoading(true);
       }
       setHomeFetchError(null);
     }
     
-    if (!reset) setIsFetchingMore(true);
-    // Don't set isDataLoading if we already have pets (prevents flickering to skeleton)
-    else if (homePetsRef.current.length === 0) setIsDataLoading(true);
+    if (!reset) {
+      setIsFetchingMore(true);
+    } else if (homePetsRef.current.length === 0) {
+      setIsDataLoading(true);
+    }
 
     const activeFilters = customFilters || filters;
     try {
@@ -1760,25 +1807,43 @@ const App: React.FC = () => {
     };
   }, [handleAuthCheck, handleAuthChange]);
 
-  // --- Push Notifications Setup ---
+  // --- Push Notifications Setup & Permission Sync ---
   useEffect(() => {
     if (!currentUser || !Capacitor.isNativePlatform()) return;
 
     let isMounted = true;
+    let appStateListenerHandle: any = null;
+
+    const syncPushToken = async () => {
+      try {
+        let permStatus = await PushNotifications.checkPermissions();
+
+        if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
+          permStatus = await PushNotifications.requestPermissions();
+        }
+
+        if (permStatus.receive === 'granted') {
+          console.log('Push notification permission granted. Registering device...');
+          await PushNotifications.register();
+        } else {
+          console.warn('Push notification permission is currently not granted:', permStatus.receive);
+          // If permission was turned off in OS settings, clear stored fcm_token
+          if (currentUserRef.current?.fcmToken) {
+            const userId = currentUserRef.current.id;
+            await supabase.from('profiles').update({ fcm_token: null }).eq('id', userId);
+            setCurrentUser(prev => prev ? { ...prev, fcmToken: null } : prev);
+          }
+        }
+      } catch (err) {
+        console.warn('Error checking/registering push notifications:', err);
+      }
+    };
 
     const setupPush = async () => {
-      let permStatus = await PushNotifications.checkPermissions();
+      // Remove existing listeners first to prevent duplicates
+      await PushNotifications.removeAllListeners();
 
-      if (permStatus.receive !== 'granted') {
-        permStatus = await PushNotifications.requestPermissions();
-      }
-
-      if (permStatus.receive !== 'granted') {
-        console.warn('User denied push notification permissions');
-        return;
-      }
-
-      // Add listeners BEFORE registering
+      // Add listeners BEFORE registering so registration events are captured
       PushNotifications.addListener('registration', async ({ value }) => {
         if (!isMounted) return;
         console.log('Registered for Push. Raw Token:', value);
@@ -1789,7 +1854,6 @@ const App: React.FC = () => {
             const { FCM } = await import('@capacitor-community/fcm');
             const fcmToken = await FCM.getToken();
             
-            // Wait sometimes the token is present and valid
             if (fcmToken && fcmToken.token) {
                tokenToSave = fcmToken.token;
             }
@@ -1799,10 +1863,18 @@ const App: React.FC = () => {
           }
         }
         
-        if (currentUser.fcmToken !== tokenToSave) {
-          const { error } = await supabase.from('profiles').update({ fcm_token: tokenToSave }).eq('id', currentUser.id);
+        const baseToken = tokenToSave ? (tokenToSave.includes('|') ? tokenToSave.split('|')[0] : tokenToSave) : null;
+        rawFcmTokenRef.current = baseToken;
+
+        const activeUser = currentUserRef.current;
+        if (activeUser && baseToken) {
+          const activeChat = (viewRef.current === 'chat-room' && selectedChatIdRef.current) ? selectedChatIdRef.current : null;
+          const fullTokenToSave = activeChat ? `${baseToken}|${activeChat}` : baseToken;
+
+          console.log('Updating FCM Token in Supabase for user:', activeUser.id, fullTokenToSave);
+          const { error } = await supabase.from('profiles').update({ fcm_token: fullTokenToSave }).eq('id', activeUser.id);
           if (!error) {
-            setCurrentUser(prev => prev ? { ...prev, fcmToken: tokenToSave } : prev);
+            setCurrentUser(prev => prev ? { ...prev, fcmToken: fullTokenToSave } : prev);
           }
         }
       });
@@ -1814,26 +1886,13 @@ const App: React.FC = () => {
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
         console.log('Push received (foreground):', notification);
         const data = notification.data || (notification as any).notification?.data;
-        let shouldShowLocal = true;
         
+        // Suppress push notification if user is inside the same chat room
         if (data?.type === 'chat_message' && data?.chatId) {
           if (viewRef.current === 'chat-room' && selectedChatIdRef.current === data.chatId) {
-            shouldShowLocal = false;
+            console.log("User is currently inside chat. Suppressing push notification.");
+            return;
           }
-        }
-        
-        if (shouldShowLocal) {
-          LocalNotifications.schedule({
-            notifications: [
-              {
-                id: Math.floor(Math.random() * 1000000),
-                title: notification.title || 'New Notification',
-                body: notification.body || '',
-                sound: 'default',
-                extra: data || {}
-              }
-            ]
-          });
         }
       });
 
@@ -1869,12 +1928,6 @@ const App: React.FC = () => {
         console.log('Channel creation error (usually ignored on iOS):', err);
       }
 
-      try {
-        await PushNotifications.register();
-      } catch (err) {
-        console.warn('PushNotifications register failed:', err);
-      }
-
       LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
         console.log('Local notification action performed:', notification);
         const data = notification.notification.extra;
@@ -1892,12 +1945,41 @@ const App: React.FC = () => {
           }
         }
       });
+
+      // Initial check and register
+      await syncPushToken();
+
+      // Listen for app state change (when user returns to app or puts app in background)
+      try {
+        appStateListenerHandle = await CapacitorApp.addListener('appStateChange', async (state) => {
+          const userId = currentUserRef.current?.id;
+          const userToken = currentUserRef.current?.fcmToken;
+          const rawToken = rawFcmTokenRef.current || (userToken ? (userToken.includes('|') ? userToken.split('|')[0] : userToken) : null);
+
+          if (userId && rawToken) {
+            const currentActiveChat = (state.isActive && viewRef.current === 'chat-room' && selectedChatIdRef.current) ? selectedChatIdRef.current : null;
+            const newTokenToSave = currentActiveChat ? `${rawToken}|${currentActiveChat}` : rawToken;
+            console.log('App state changed (isActive:', state.isActive, '), syncing DB token:', newTokenToSave);
+            await supabase.from('profiles').update({ fcm_token: newTokenToSave }).eq('id', userId);
+          }
+
+          if (state.isActive && isMounted) {
+            console.log('App returned to foreground, re-checking push notification permission status...');
+            await syncPushToken();
+          }
+        });
+      } catch (e) {
+        console.warn('Failed to register appStateChange listener:', e);
+      }
     };
 
     setupPush();
 
     return () => {
       isMounted = false;
+      if (appStateListenerHandle && typeof appStateListenerHandle.remove === 'function') {
+        appStateListenerHandle.remove();
+      }
       PushNotifications.removeAllListeners();
       LocalNotifications.removeAllListeners();
     };
@@ -2227,7 +2309,7 @@ const App: React.FC = () => {
       <>
         <div className="w-full min-h-full" style={{ display: isRootView && activeRootTab === 'home' ? 'block' : 'none' }}>
             <HomeFeed 
-              isActive={view === 'home' && !selectedPet}
+              isActive={view === 'home'}
               pets={filteredHomePets} activeCategory={activeCategory}
               onCategoryChange={(cat) => { setActiveCategory(cat); setFilters(prev => ({ ...prev, type: cat })); }}
               onPetClick={async (p) => { 
@@ -2255,7 +2337,14 @@ const App: React.FC = () => {
               currentUser={currentUser} isLoading={isDataLoading && homePets.length === 0}
               viewMode={homeViewMode} onViewModeChange={setHomeViewMode}
               onLoadMore={() => fetchHomePets(false)} hasMore={hasMore} isFetchingMore={isFetchingMore}
-              error={homeFetchError} onRetry={() => fetchHomePets(true)}
+              error={homeFetchError} onRetry={async () => {
+                setHomePets([]);
+                setIsDataLoading(true);
+                await fetchHomePets(true);
+                if (currentUserRef.current) {
+                  await fetchUserSpecificData(currentUserRef.current.id, false, currentUserRef.current.isAdmin);
+                }
+              }}
             />
         </div>
 
@@ -2311,7 +2400,7 @@ const App: React.FC = () => {
         <div className="w-full min-h-full" style={{ display: isRootView && activeRootTab === 'profile' ? 'block' : 'none' }}>
             {currentUser && (
               <ProfileView 
-                isActive={view === 'profile' && !selectedPet}
+                isActive={view === 'profile'}
                 pets={allKnownPets} owner={currentUser} isLoading={isDataLoading}
                 initialShowMenu={profileMenuInitial}
                 onRetry={() => {

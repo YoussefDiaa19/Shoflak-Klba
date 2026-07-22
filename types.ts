@@ -44,7 +44,8 @@ export interface Owner {
   reportedPetIds?: string[];
   language?: 'en' | 'ar';
   isAdmin?: boolean;
-  fcmToken?: string;
+  phone?: string;
+  fcmToken?: string | null;
 }
 
 export interface SupportMessage {

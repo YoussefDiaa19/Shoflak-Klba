@@ -85,7 +85,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
       try {
         console.log("Triggering native Apple sign in...");
         const result = await SignInWithApple.authorize({
-          clientId: 'com.shoflakklba.app', // Correct native Bundle ID on iOS (NOT the Services ID)
+          clientId: 'com.shoflakklba.app',
           redirectURI: 'https://pgkbzeixrtcehbfemsqe.supabase.co/auth/v1/callback',
           scopes: 'email name',
         });
@@ -106,13 +106,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No Identity Token received from Apple native login");
         }
       } catch (err: any) {
-        console.warn("Native Apple Login failed with error details:", err);
-        // Do not return here, fall through to web flow if native fails
+        console.warn("Native Apple Login canceled or failed:", err);
+        setIsSubmitting(false);
+        return;
       }
     }
 
-    // NATIVE GOOGLE LOGIN (Android/iOS only, and if plugin loaded)
-    if (provider === 'google' && isNative && GoogleAuth) {
+    // NATIVE GOOGLE LOGIN (Android/iOS only)
+    if (provider === 'google' && isNative) {
       try {
         console.log("Triggering native Google sign in...");
         const user = await GoogleAuth.signIn();
@@ -130,8 +131,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, existingOwners, o
           throw new Error("No ID Token received from native login");
         }
       } catch (err: any) {
-        console.error("Native Google Login failed, falling back to web OAuth:", err);
-        // Do not return here, fall through to web flow if native fails
+        console.error("Native Google Login canceled or failed:", err);
+        setIsSubmitting(false);
+        // If user canceled or native dialog dismissed, don't open secondary browser window
+        const msg = String(err?.message || err);
+        if (msg.includes('canceled') || msg.includes('12501') || msg.includes('cancel')) {
+          return;
+        }
+        // Fall back to web flow only if native plugin initialization failed
       }
     }
 

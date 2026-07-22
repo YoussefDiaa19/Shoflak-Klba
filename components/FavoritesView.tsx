@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Pet, Owner } from '../types';
+import { translateBreed } from '../data';
 import { translations } from '../translations';
 import { Heart, Search, X, LogIn } from 'lucide-react';
 import { PetCardSkeleton } from './Skeleton';
@@ -122,7 +123,7 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
               >
                 <div className="relative pb-[100%]">
                   <div className="absolute inset-0">
-                    <img src={pet.images[0]} loading="lazy" decoding="async" className="w-full h-full object-cover" alt={pet.name} referrerPolicy="no-referrer" />
+                    <img src={pet.images[0] || undefined} loading="lazy" decoding="async" className="w-full h-full object-cover" alt={pet.name} referrerPolicy="no-referrer" />
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
@@ -134,7 +135,7 @@ export const FavoritesView: React.FC<FavoritesViewProps> = ({
                 </button>
                 <div className="absolute bottom-3 left-4 pointer-events-none">
                   <p className="text-white font-bold">{pet.name}</p>
-                  <p className="text-white/70 text-[10px] font-bold uppercase">{pet.breed}</p>
+                  <p className="text-white/70 text-[10px] font-bold uppercase">{translateBreed(pet.breed, lang)}</p>
                 </div>
               </div>
             ))}

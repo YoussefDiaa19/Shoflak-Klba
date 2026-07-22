@@ -68,7 +68,15 @@ serve(async (req) => {
     }
 
     // Filter unique valid tokens
-    const tokens = Array.from(new Set(profiles.map(p => p.fcm_token).filter(t => t && typeof t === 'string' && t.length > 10)));
+    const tokens = Array.from(new Set(
+      profiles
+        .map(p => {
+          const t = p.fcm_token;
+          if (!t || typeof t !== 'string') return '';
+          return t.includes('|') ? t.split('|')[0] : t;
+        })
+        .filter(t => t && t.length > 10)
+    ));
     
     if (tokens.length === 0) {
       return new Response(JSON.stringify({ success: true, message: 'No valid tokens found after filtering.' }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });

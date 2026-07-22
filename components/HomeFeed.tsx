@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Pet, PetType, Filters, Owner } from '../types';
-import { DOG_BREEDS, CAT_BREEDS, BIRD_BREEDS, CITIES_DATA } from '../data';
+import { DOG_BREEDS, CAT_BREEDS, BIRD_BREEDS, CITIES_DATA, formatLocation, translateBreed } from '../data';
 import { translations } from '../translations';
 import { List, LayoutGrid, SlidersHorizontal, Heart, PawPrint, X, Search, Sparkles, MapPin, Globe } from 'lucide-react';
 import { PetCardSkeleton } from './Skeleton';
@@ -34,7 +34,7 @@ const PetCard: React.FC<{ pet: Pet; mode: 'list' | 'grid'; onClick: () => void; 
       <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 shadow-sm active:opacity-70 transition-opacity" onClick={onClick}>
         <div className="relative pb-[100%]">
           <div className="absolute inset-0">
-            <img src={pet.images[0]} loading="lazy" decoding="async" className="w-full h-full object-cover" alt={pet.name} referrerPolicy="no-referrer" />
+            <img src={pet.images[0] || undefined} loading="lazy" decoding="async" className="w-full h-full object-cover" alt={pet.name} referrerPolicy="no-referrer" />
             {pet.status === 'approved' && (
               <div className={`absolute top-2 ${lang === 'ar' ? 'right-2' : 'left-2'} p-1 px-2 rounded-lg bg-[#e2a05e] text-white text-[8px] font-black uppercase flex items-center gap-1 shadow-md z-10`}>
                 <Sparkles size={8} fill="white" /> {t.marriageReady}
@@ -61,7 +61,7 @@ const PetCard: React.FC<{ pet: Pet; mode: 'list' | 'grid'; onClick: () => void; 
     <div className="relative rounded-[32px] overflow-hidden shadow-lg bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 cursor-pointer active:opacity-80 transition-opacity transform-gpu will-change-transform" style={{ WebkitTransform: 'translate3d(0,0,0)' }} onClick={onClick}>
       <div className="relative pb-[125%] pointer-events-none">
         <div className="absolute inset-0 pointer-events-auto">
-          <img src={pet.images[0]} loading="lazy" decoding="async" className="w-full h-full object-cover" alt={pet.name} referrerPolicy="no-referrer" />
+          <img src={pet.images[0] || undefined} loading="lazy" decoding="async" className="w-full h-full object-cover" alt={pet.name} referrerPolicy="no-referrer" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent" />
           
           {pet.status === 'approved' && (
@@ -75,14 +75,15 @@ const PetCard: React.FC<{ pet: Pet; mode: 'list' | 'grid'; onClick: () => void; 
           </button>
           <div className="absolute bottom-8 left-6 right-6">
             <h3 className="text-3xl font-bold text-white">{pet.name}, {pet.age}</h3>
-            <p className="text-white/80 text-sm mt-1">{pet.location} • {lang === 'ar' 
-              ? ([...DOG_BREEDS, ...CAT_BREEDS, ...BIRD_BREEDS].find(b => b.en === pet.breed)?.ar || pet.breed)
-              : pet.breed
-            }</p>
+            <p className="text-white/80 text-sm mt-1">
+              {formatLocation(pet.location, '', lang)} • {translateBreed(pet.breed, lang)}
+            </p>
             
             <div className="flex mt-4 -mx-1">
               {(Array.isArray(pet.personality) ? pet.personality : []).slice(0, 2).map((tag, idx) => (
-                <span key={tag} className="mx-1 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-[10px] font-bold uppercase tracking-wider">{tag}</span>
+                <span key={tag} className="mx-1 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-[10px] font-bold uppercase tracking-wider">
+                  {(t as any)[tag] || tag}
+                </span>
               ))}
             </div>
           </div>
@@ -132,6 +133,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
 
   const [pullProgress, setPullProgress] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const currentPull = useRef(0);
   
@@ -140,6 +142,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
       setPullProgress(0);
       currentPull.current = 0;
       setIsPulling(false);
+      setIsRefreshing(false);
       return;
     }
     const PTR_THRESHOLD = 80;
@@ -147,7 +150,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     const handleTouchStart = (e: TouchEvent) => {
       // Re-query in case DOM changed
       const main = document.getElementById('app-main');
-      if (main && main.scrollTop <= 5) {
+      if (main && main.scrollTop <= 15) {
         touchStartY.current = e.touches[0].clientY;
         currentPull.current = 0;
       } else {
@@ -157,7 +160,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
 
     const handleTouchMove = (e: TouchEvent) => {
       const main = document.getElementById('app-main');
-      if (touchStartY.current > 0 && main && main.scrollTop <= 5) {
+      if (touchStartY.current > 0 && main && main.scrollTop <= 15) {
         const y = e.touches[0].clientY;
         const diff = (y - touchStartY.current) * 0.5; // Resistance
         if (diff > 0) {
@@ -169,43 +172,41 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
       }
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = async () => {
       if (currentPull.current >= PTR_THRESHOLD && onRetry) {
-        onRetry();
-        // Give feedback haptics if possible
+        setIsRefreshing(true);
+        setPullProgress(PTR_THRESHOLD);
+        setIsPulling(false);
         if (window.navigator.vibrate) window.navigator.vibrate(10);
+        
+        try {
+          await Promise.resolve(onRetry());
+        } catch (err) {
+          console.error("Home feed refresh error:", err);
+        } finally {
+          setIsRefreshing(false);
+          setPullProgress(0);
+          currentPull.current = 0;
+          touchStartY.current = 0;
+        }
+      } else {
+        setIsPulling(false);
+        setPullProgress(0);
+        currentPull.current = 0;
+        touchStartY.current = 0;
       }
-      
-      setIsPulling(false);
-      setPullProgress(0);
-      currentPull.current = 0;
-      touchStartY.current = 0;
     };
 
-    const mainElement = document.getElementById('app-main');
-    if (!mainElement) {
-      // Retry in 500ms if not found yet (race condition)
-      const t = setTimeout(() => {
-        const m = document.getElementById('app-main');
-        if (m) {
-          m.addEventListener('touchstart', handleTouchStart, { passive: true });
-          m.addEventListener('touchmove', handleTouchMove, { passive: false });
-          m.addEventListener('touchend', handleTouchEnd);
-        }
-      }, 500);
-      return () => clearTimeout(t);
-    }
-
-    mainElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-    mainElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-    mainElement.addEventListener('touchend', handleTouchEnd);
-    mainElement.addEventListener('touchcancel', handleTouchEnd);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
-      mainElement.removeEventListener('touchstart', handleTouchStart);
-      mainElement.removeEventListener('touchmove', handleTouchMove);
-      mainElement.removeEventListener('touchend', handleTouchEnd);
-      mainElement.removeEventListener('touchcancel', handleTouchEnd);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [onRetry, isActive]);
 
@@ -299,13 +300,13 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
   return (
     <div className="bg-white dark:bg-[#1a1a1a] min-h-full">
       
-      {isActive && pullProgress > 0 && (
+      {isActive && (pullProgress > 0 || isRefreshing) && (
         <div 
           className="fixed top-[env(safe-area-inset-top)] left-1/2 z-[40] pointer-events-none"
-          style={{ transform: `translate(-50%, ${Math.min(pullProgress, 100)}px)`, transition: isPulling ? 'none' : 'transform 0.3s ease-out' }}
+          style={{ transform: `translate(-50%, ${Math.min(isRefreshing ? 80 : pullProgress, 100)}px)`, transition: isPulling ? 'none' : 'transform 0.3s ease-out' }}
         >
-          <div className={`mt-16 bg-white dark:bg-zinc-800 shadow-2xl rounded-full p-2 border border-gray-100 dark:border-zinc-700 transition-opacity ${pullProgress > 5 ? 'opacity-100' : 'opacity-0'}`}>
-             <span className={`w-8 h-8 flex items-center justify-center rounded-full bg-[#e2a05e] text-white transition-transform ${pullProgress >= 80 ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullProgress * 3}deg)` }}>
+          <div className={`mt-16 bg-white dark:bg-zinc-800 shadow-2xl rounded-full p-2 border border-gray-100 dark:border-zinc-700 transition-opacity ${pullProgress > 5 || isRefreshing ? 'opacity-100' : 'opacity-0'}`}>
+             <span className={`w-8 h-8 flex items-center justify-center rounded-full bg-[#e2a05e] text-white transition-transform ${pullProgress >= 80 || isRefreshing ? 'animate-spin' : ''}`} style={{ transform: isRefreshing ? undefined : `rotate(${pullProgress * 3}deg)` }}>
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
              </span>
           </div>

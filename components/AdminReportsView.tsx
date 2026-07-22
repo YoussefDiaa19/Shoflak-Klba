@@ -86,7 +86,7 @@ export const AdminReportsView: React.FC<AdminReportsViewProps> = ({
                       onClick={() => onViewPet(pet)}
                       className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors text-left"
                     >
-                      <img src={pet.images[0]} className="w-10 h-10 rounded-xl object-cover" alt={pet.name} referrerPolicy="no-referrer" />
+                      <img src={pet.images[0] || undefined} className="w-10 h-10 rounded-xl object-cover" alt={pet.name} referrerPolicy="no-referrer" />
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold text-gray-400 uppercase">{t.managePets}</p>
                         <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{pet.name}</p>
@@ -106,7 +106,7 @@ export const AdminReportsView: React.FC<AdminReportsViewProps> = ({
                 {petOwner && (
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-700">
-                      <img src={petOwner.avatar} className="w-10 h-10 rounded-xl object-cover" alt={petOwner.name} referrerPolicy="no-referrer" />
+                      <img src={petOwner.avatar || undefined} className="w-10 h-10 rounded-xl object-cover" alt={petOwner.name} referrerPolicy="no-referrer" />
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold text-gray-400 uppercase">{t.owner}</p>
                         <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{petOwner.name}</p>
@@ -127,7 +127,7 @@ export const AdminReportsView: React.FC<AdminReportsViewProps> = ({
               {reporter && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-zinc-800/30 rounded-xl border border-gray-100 dark:border-zinc-800/50">
                   <p className="text-[10px] font-bold text-gray-400 uppercase">{t.from}:</p>
-                  <img src={reporter.avatar} className="w-5 h-5 rounded-md object-cover" alt={reporter.name} referrerPolicy="no-referrer" />
+                  <img src={reporter.avatar || undefined} className="w-5 h-5 rounded-md object-cover" alt={reporter.name} referrerPolicy="no-referrer" />
                   <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{reporter.name}</p>
                 </div>
               )}

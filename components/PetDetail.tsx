@@ -164,7 +164,7 @@ export const PetDetail: React.FC<PetDetailProps> = ({ pet, onBack, onChat, onVie
             {pet.images.map((img, idx) => (
               <img 
                 key={idx} 
-                src={img} 
+                src={img || undefined} 
                 loading={idx === 0 ? "eager" : "lazy"} 
                 decoding="async" 
                 alt={pet.name} 
@@ -264,7 +264,7 @@ export const PetDetail: React.FC<PetDetailProps> = ({ pet, onBack, onChat, onVie
                 className="bg-[#fdf2e9]/50 dark:bg-zinc-800/30 rounded-[32px] p-5 flex items-center justify-between border border-[#e2a05e]/20 cursor-pointer active:scale-[0.98] transition-transform"
               >
                 <div className="flex items-center">
-                  <img src={owner.avatar} className="w-14 h-14 rounded-2xl object-cover shadow-md shrink-0 block" alt={owner.name} referrerPolicy="no-referrer" />
+                  <img src={owner.avatar || undefined} className="w-14 h-14 rounded-2xl object-cover shadow-md shrink-0 block" alt={owner.name} referrerPolicy="no-referrer" />
                   <div className="ml-4 rtl:mr-4 rtl:ml-0">
                     <h4 className="font-bold text-gray-900 dark:text-white text-lg">{owner.name}</h4>
                     <p className="text-gray-500 dark:text-gray-400 text-sm">{formatLocation(owner.area, owner.city, lang)}</p>

@@ -132,10 +132,10 @@ export const ChatListView: React.FC<ChatListViewProps> = ({ chats, pets, onChatS
                 >
                   <div className="relative shrink-0 flex-shrink-0 w-[4rem] min-w-[4rem] mr-4 block">
                     <div className="w-16 h-16 rounded-[24px] overflow-hidden shadow-md ring-2 ring-white dark:ring-zinc-800 bg-gray-100 dark:bg-zinc-800">
-                      <img src={displayAvatar} loading="lazy" decoding="async" className={`w-full h-full object-cover ${isBlocked ? 'grayscale' : ''}`} alt={displayName} referrerPolicy="no-referrer" />
+                      <img src={displayAvatar || undefined} loading="lazy" decoding="async" className={`w-full h-full object-cover ${isBlocked ? 'grayscale' : ''}`} alt={displayName} referrerPolicy="no-referrer" />
                     </div>
                     <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-xl border-2 border-white dark:border-zinc-900 overflow-hidden shadow-lg bg-gray-200">
-                      <img src={petThumb} loading="lazy" decoding="async" className={`w-full h-full object-cover ${isBlocked ? 'grayscale' : ''}`} referrerPolicy="no-referrer" />
+                      <img src={petThumb || undefined} loading="lazy" decoding="async" className={`w-full h-full object-cover ${isBlocked ? 'grayscale' : ''}`} referrerPolicy="no-referrer" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 pl-1">

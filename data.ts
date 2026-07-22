@@ -474,3 +474,37 @@ export const INITIAL_PETS: Pet[] = [
     images: ['https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=800'], ownerId: 'owner7', status: 'approved'
   }
 ];
+
+export const formatLocation = (area: string, city: string, lang: string = 'en') => {
+  if (!area && !city) return '';
+  
+  // If city is passed as full "Area, City" combined string
+  if (area && area.includes(',') && !city) {
+    const parts = area.split(',').map(s => s.trim());
+    area = parts[0] || '';
+    city = parts[1] || '';
+  }
+
+  const cityData = CITIES_DATA.find(c => c.en.toLowerCase() === (city || '').toLowerCase() || c.ar === city);
+  const areaData = cityData?.areas.find(a => a.en.toLowerCase() === (area || '').toLowerCase() || a.ar === area);
+  
+  if (lang === 'ar') {
+    const cityAr = cityData?.ar || city;
+    const areaAr = areaData?.ar || area;
+    if (!area) return cityAr;
+    if (!city) return areaAr;
+    return `${areaAr}, ${cityAr}`;
+  }
+  
+  if (!area) return city;
+  if (!city) return area;
+  return `${area}, ${city}`;
+};
+
+export const translateBreed = (breed: string, lang: string = 'en') => {
+  if (!breed) return '';
+  if (lang !== 'ar') return breed;
+  const allBreeds = [...DOG_BREEDS, ...CAT_BREEDS, ...BIRD_BREEDS];
+  const found = allBreeds.find(b => b.en.toLowerCase() === breed.toLowerCase() || b.ar === breed);
+  return found?.ar || breed;
+};

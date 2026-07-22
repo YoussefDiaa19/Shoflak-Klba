@@ -58,6 +58,28 @@ serve(async (req) => {
         return new Response("User has no FCM token saved, silently ignoring.", { status: 200 });
       }
 
+      const rawToken = String(recipientProfile.fcm_token);
+      let fcmToken = rawToken;
+      let activeChatId: string | null = null;
+
+      if (rawToken.includes('|')) {
+        const parts = rawToken.split('|');
+        fcmToken = parts[0];
+        activeChatId = parts[1] || null;
+      }
+
+      console.log(`Checking activeChatId: "${activeChatId}" against message chatId: "${chatId}"`);
+
+      // If recipient is currently inside this chat room, SUPPRESS PUSH NOTIFICATION
+      if (activeChatId && String(activeChatId).trim() === String(chatId).trim()) {
+        console.log(`SUPPRESSED: Recipient ${recipientId} is actively inside chat ${chatId}. FCM push skipped!`);
+        return new Response("User inside active chat, push suppressed.", { status: 200 });
+      }
+
+      if (!fcmToken || fcmToken.trim().length === 0) {
+        return new Response("Invalid FCM token", { status: 200 });
+      }
+
       // 3. Find sender's name
       const { data: senderProfile } = await supabase.from('profiles').select('name').eq('id', senderId).single();
       const senderName = senderProfile?.name || 'Someone';
@@ -88,7 +110,7 @@ serve(async (req) => {
       console.log("7. ATTEMPTING TO SEND TO FIREBASE...");
       try {
         const response = await getMessaging().send({
-          token: recipientProfile.fcm_token,
+          token: fcmToken,
           android: {
             notification: {
               channelId: 'default',

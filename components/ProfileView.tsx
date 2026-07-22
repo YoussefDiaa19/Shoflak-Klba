@@ -67,7 +67,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       if (showAddPet || editPet || showMenu || showLanguageModal || petToDeleteId) return;
       
       const main = document.getElementById('app-main');
-      if (main && main.scrollTop <= 5) {
+      if (main && main.scrollTop <= 15) {
         touchStartY.current = e.touches[0].clientY;
         currentPull.current = 0;
       } else {
@@ -77,7 +77,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
     const handleTouchMove = (e: TouchEvent) => {
       const main = document.getElementById('app-main');
-      if (touchStartY.current > 0 && main && main.scrollTop <= 5) {
+      if (touchStartY.current > 0 && main && main.scrollTop <= 15) {
         const y = e.touches[0].clientY;
         const diff = (y - touchStartY.current) * 0.5; // Resistance
         if (diff > 0) {
@@ -89,10 +89,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       }
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = async () => {
       if (currentPull.current >= PTR_THRESHOLD && onRetry) {
-        onRetry();
         if (window.navigator.vibrate) window.navigator.vibrate(10);
+        try {
+          await Promise.resolve(onRetry());
+        } catch (err) {
+          console.error("Profile refresh error:", err);
+        }
       }
       
       setIsPulling(false);
@@ -101,29 +105,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       touchStartY.current = 0;
     };
 
-    const mainElement = document.getElementById('app-main');
-    if (!mainElement) {
-      const wait = setTimeout(() => {
-        const m = document.getElementById('app-main');
-        if (m) {
-          m.addEventListener('touchstart', handleTouchStart, { passive: true });
-          m.addEventListener('touchmove', handleTouchMove, { passive: false });
-          m.addEventListener('touchend', handleTouchEnd);
-        }
-      }, 500);
-      return () => clearTimeout(wait);
-    }
-
-    mainElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-    mainElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-    mainElement.addEventListener('touchend', handleTouchEnd);
-    mainElement.addEventListener('touchcancel', handleTouchEnd);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
-      mainElement.removeEventListener('touchstart', handleTouchStart);
-      mainElement.removeEventListener('touchmove', handleTouchMove);
-      mainElement.removeEventListener('touchend', handleTouchEnd);
-      mainElement.removeEventListener('touchcancel', handleTouchEnd);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [onRetry, showAddPet, editPet, showMenu, showLanguageModal, petToDeleteId, isActive]);
   
@@ -314,7 +305,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <Loader2 size={24} className="text-[#e2a05e] animate-spin" />
             </div>
           ) : currentImage ? (
-            <img src={currentImage} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            <img src={currentImage || undefined} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           ) : (
             <>
               <Camera size={20} className="text-gray-400" />
@@ -488,7 +479,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           ) : (
             <div className="w-32 h-32 rounded-[48px] border-4 border-[#fdf2e9] dark:border-zinc-800 shadow-xl overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center">
               {displayOwner.avatar ? (
-                <img src={displayOwner.avatar} className="w-full h-full object-cover" alt="User" referrerPolicy="no-referrer" />
+                <img src={displayOwner.avatar || undefined} className="w-full h-full object-cover" alt="User" referrerPolicy="no-referrer" />
               ) : (
                 <User size={64} className="text-gray-300" />
               )}
@@ -577,7 +568,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               ) : (
                 myPets.map(pet => (
                   <div key={pet.id} className="min-w-[170px] relative rounded-[28px] overflow-hidden group shadow-sm bg-gray-50 dark:bg-zinc-800/20" onClick={() => onPetClick(pet)}>
-                    <img src={pet.images[0]} className="w-full aspect-[4/5] object-cover" alt={pet.name} referrerPolicy="no-referrer" />
+                    <img src={pet.images[0] || undefined} className="w-full aspect-[4/5] object-cover" alt={pet.name} referrerPolicy="no-referrer" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
                     <div className="absolute top-2 left-2 z-10">
                        {getStatusBadge(pet.status)}
@@ -831,16 +822,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">NAME</label>
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t.petName}</label>
                 <input required className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" placeholder={t.petName} value={newPet.name} onChange={e => setNewPet({...newPet, name: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">AGE</label>
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t.age}</label>
                   <input required type="number" min="1" max="30" className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" placeholder={t.age} value={newPet.age || ''} onChange={e => setNewPet({...newPet, age: e.target.value === '' ? ('' as any) : Math.min(30, Math.max(1, parseInt(e.target.value) || 1))})} />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">TYPE</label>
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1 mb-2 block">{t.petType}</label>
                   <select className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-black dark:text-white font-medium outline-none border border-gray-100 dark:border-zinc-700" value={newPet.type} onChange={e => setNewPet({...newPet, type: e.target.value as any, breed: getBreedListForType(e.target.value as any)[0].en})}>
                     <option value="Dog">{t.dog}</option><option value="Cat">{t.cat}</option><option value="Bird">{t.bird}</option>
                   </select>

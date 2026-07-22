@@ -1,5 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Keyboard } from '@capacitor/keyboard';
 import { Chat, Pet, Owner, Message } from '../types';
 import { translations } from '../translations';
 import { ArrowLeft, Send, MoreVertical, ShieldAlert, X, AlertTriangle, UserX, Loader2, CheckSquare, Square, Plus, Camera, Image as ImageIcon, ImagePlus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
@@ -98,19 +100,36 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
     }
   }, []);
 
-  // Handle keyboard show - listener for Viewport changes
+  // Handle keyboard show - native plugin & listener for Viewport changes
   useEffect(() => {
-    if (!window.visualViewport) return;
-    
+    let showSub: any = null;
+    let didShowSub: any = null;
+
+    if (Capacitor.isNativePlatform()) {
+      showSub = Keyboard.addListener('keyboardWillShow', () => {
+        scrollToBottom('smooth');
+        setTimeout(() => scrollToBottom('smooth'), 100);
+      });
+      didShowSub = Keyboard.addListener('keyboardDidShow', () => {
+        scrollToBottom('smooth');
+      });
+    }
+
     const onResize = () => {
-      // If the viewport height decreased significantly, assume keyboard is open
       if (window.visualViewport && window.visualViewport.height < window.innerHeight * 0.8) {
         scrollToBottom('smooth');
       }
     };
     
-    window.visualViewport.addEventListener('resize', onResize);
-    return () => window.visualViewport?.removeEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      if (showSub) showSub.then((s: any) => s.remove());
+      if (didShowSub) didShowSub.then((s: any) => s.remove());
+      window.visualViewport?.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', onResize);
+    };
   }, [scrollToBottom]);
 
   // Initial load scroll
@@ -251,7 +270,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
             className={`flex items-center gap-3 transition-all ${isMessagingDisabled ? 'opacity-70 cursor-default' : 'cursor-pointer active:scale-95'}`} 
             onClick={() => !isMessagingDisabled && otherUser && onViewProfile(otherUser.id)}
           >
-            <img src={otherUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherId}`} className="w-10 h-10 rounded-full object-cover shadow-sm" alt={otherUser?.name || 'User'} referrerPolicy="no-referrer" />
+            <img src={otherUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherId || undefined}`} className="w-10 h-10 rounded-full object-cover shadow-sm" alt={otherUser?.name || 'User'} referrerPolicy="no-referrer" />
             <div className="min-w-0">
               <h4 className="font-bold text-gray-900 dark:text-white leading-tight truncate">{otherUser?.name || t.deletedUser}</h4>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight truncate">{subLabel}</p>
@@ -330,7 +349,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
                                 style={{ maxHeight: msg.imageUrls?.length === 1 ? '300px' : 'none', minHeight: '100px' }}
                               >
                                 <img 
-                                  src={url} 
+                                  src={url || undefined} 
                                   loading="lazy"
                                   decoding="async"
                                   key={url}
@@ -387,7 +406,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
                   <div className={`grid gap-1 ${msg.previewUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     {msg.previewUrls.map((url, i) => (
                       <div key={i} className={`${msg.previewUrls.length === 3 && i === 0 ? 'col-span-2' : ''} relative rounded-[18px] overflow-hidden bg-white/10`} style={{ maxHeight: msg.previewUrls.length === 1 ? '300px' : 'none', minHeight: '100px' }}>
-                        <img onLoad={() => scrollToBottom('smooth')} src={url} className={`w-full h-full object-cover ${msg.previewUrls.length === 1 ? 'max-h-[300px]' : 'aspect-square'}`} />
+                        <img onLoad={() => scrollToBottom('smooth')} src={url || undefined} className={`w-full h-full object-cover ${msg.previewUrls.length === 1 ? 'max-h-[300px]' : 'aspect-square'}`} />
                       </div>
                     ))}
                   </div>
@@ -515,7 +534,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
            {/* Main Image View */}
            <div className="flex-1 flex items-center justify-center relative p-4 overflow-hidden">
               <img 
-                src={previewUrls[currentPreviewIndex]} 
+                src={previewUrls[currentPreviewIndex] || undefined} 
                 alt="Preview" 
                 className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-300" 
                 referrerPolicy="no-referrer"
@@ -532,7 +551,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
                       onClick={() => setCurrentPreviewIndex(i)}
                       className={`relative w-16 h-16 rounded-xl overflow-hidden shadow-xl border-2 transition-all shrink-0 cursor-pointer ${i === currentPreviewIndex ? 'border-[#e2a05e] scale-110' : 'border-white/10 opacity-40 hover:opacity-100'}`}
                     >
-                       <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                       <img src={url || undefined} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                        <button 
                          onClick={(e) => {
                            e.stopPropagation();
@@ -679,7 +698,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
               </>
             )}
             <img 
-              src={viewerImages[viewerIndex]} 
+              src={viewerImages[viewerIndex] || undefined} 
               alt="Full view" 
               className="max-w-full max-h-full object-contain shadow-2xl animate-in zoom-in-95 duration-300 transition-all transform" 
               referrerPolicy="no-referrer"
