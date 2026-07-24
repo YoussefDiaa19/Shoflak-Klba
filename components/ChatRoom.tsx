@@ -100,68 +100,93 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
     }
   }, []);
 
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [windowShrink, setWindowShrink] = useState(0);
-  const isKeyboardOpen = useRef(false);
-  const closedHeight = useRef(typeof window !== 'undefined' ? window.innerHeight : 800);
+  const [effectiveKeyboardHeight, setEffectiveKeyboardHeight] = useState(0);
 
   // Handle keyboard show - native plugin & listener for Viewport changes
   useEffect(() => {
     let showSub: any = null;
     let hideSub: any = null;
 
-    const onWindowResize = () => {
-      if (!isKeyboardOpen.current) {
-        closedHeight.current = window.innerHeight;
-        setWindowShrink(0);
-      } else {
-        setWindowShrink(Math.max(0, closedHeight.current - window.innerHeight));
-      }
-    };
-    window.addEventListener('resize', onWindowResize);
-
     if (Capacitor.isNativePlatform()) {
+      let isKeyboardOpen = false;
+      let kbHeight = 0;
+      
+      let maxWindowHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+      let lastWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+
+      const checkShrink = () => {
+        if (!isKeyboardOpen) {
+          setEffectiveKeyboardHeight(0);
+          return;
+        }
+        if (maxWindowHeight - window.innerHeight > 100) {
+          // Window shrunk natively (e.g. A50, iOS with resize:body)
+          setEffectiveKeyboardHeight(0);
+        } else {
+          // Window did not shrink (e.g. S25 Ultra with Android 15 edge-to-edge bug)
+          setEffectiveKeyboardHeight(kbHeight);
+        }
+      };
+
+      const handleResize = () => {
+        if (Math.abs(window.innerWidth - lastWidth) > 50) {
+          // Orientation change or split screen
+          lastWidth = window.innerWidth;
+          if (!isKeyboardOpen) {
+            maxWindowHeight = window.innerHeight;
+          }
+        } else if (window.innerHeight > maxWindowHeight) {
+          maxWindowHeight = window.innerHeight;
+        }
+        
+        checkShrink();
+      };
+      
+      window.addEventListener('resize', handleResize);
+
       showSub = Keyboard.addListener('keyboardWillShow', (info: { keyboardHeight: number }) => {
-        isKeyboardOpen.current = true;
-        setKeyboardHeight(info.keyboardHeight || 0);
+        isKeyboardOpen = true;
+        kbHeight = info.keyboardHeight || 0;
+        checkShrink();
+        
         scrollToBottom('smooth');
         setTimeout(() => scrollToBottom('smooth'), 100);
         setTimeout(() => scrollToBottom('smooth'), 250);
       });
+
       hideSub = Keyboard.addListener('keyboardWillHide', () => {
-        isKeyboardOpen.current = false;
-        setKeyboardHeight(0);
-        setWindowShrink(0);
+        isKeyboardOpen = false;
+        kbHeight = 0;
+        checkShrink();
+        
         scrollToBottom('smooth');
         setTimeout(() => scrollToBottom('smooth'), 100);
       });
-    }
 
-    const onVPResize = () => {
-      if (window.visualViewport) {
-        const visibleHeight = window.visualViewport.height;
-        const totalHeight = window.innerHeight;
-        const diff = totalHeight - visibleHeight;
-        if (diff > 100) {
-          setKeyboardHeight(diff);
-        } else {
-          setKeyboardHeight(0);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        if (showSub) showSub.then((s: any) => s.remove());
+        if (hideSub) hideSub.then((s: any) => s.remove());
+      };
+    } else {
+      // Web fallback
+      const onVPResize = () => {
+        if (window.visualViewport) {
+          const visibleHeight = window.visualViewport.height;
+          const totalHeight = window.innerHeight;
+          const diff = totalHeight - visibleHeight;
+          if (diff > 100) {
+            setEffectiveKeyboardHeight(diff);
+          } else {
+            setEffectiveKeyboardHeight(0);
+          }
         }
-      }
-    };
-    
-    if (!Capacitor.isNativePlatform()) {
+      };
       window.visualViewport?.addEventListener('resize', onVPResize);
-    }
-
-    return () => {
-      window.removeEventListener('resize', onWindowResize);
-      if (!Capacitor.isNativePlatform()) {
+      return () => {
         window.visualViewport?.removeEventListener('resize', onVPResize);
-      }
-      if (showSub) showSub.then((s: any) => s.remove());
-      if (hideSub) hideSub.then((s: any) => s.remove());
-    };
+      };
+    }
   }, [scrollToBottom]);
 
   // Initial load scroll
@@ -287,9 +312,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
         ? `${t.interestedIn} ${petName}`
         : `${petName}'s ${t.owner}`)
     : t.deletedPet;
-
-  const isWeb = Capacitor.getPlatform() === 'web';
-  const effectiveKeyboardHeight = isWeb ? keyboardHeight : Math.max(0, keyboardHeight - windowShrink);
 
   return (
     <div 
