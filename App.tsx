@@ -2557,7 +2557,7 @@ const App: React.FC = () => {
             initial="enter"
             animate="center"
             exit="exit"
-            className={`fixed inset-0 z-[100] bg-white dark:bg-[#1a1a1a] ${['chat-room', 'detail', 'owner-profile', 'auth'].includes(view) ? 'overflow-hidden h-screen' : 'overflow-y-auto min-h-full'} hide-scrollbar transform-gpu will-change-transform`}
+            className={`fixed inset-0 z-[100] bg-white dark:bg-[#1a1a1a] ${['chat-room', 'detail', 'owner-profile', 'auth'].includes(view) ? 'overflow-hidden h-full' : 'overflow-y-auto min-h-full'} hide-scrollbar transform-gpu will-change-transform`}
           >
             <div className={`${view === 'chat-room' ? 'h-full' : 'min-h-full'} flex flex-col`}>
               {view === 'auth' && (

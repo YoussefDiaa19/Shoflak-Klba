@@ -101,69 +101,66 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
   }, []);
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [windowShrink, setWindowShrink] = useState(0);
+  const isKeyboardOpen = useRef(false);
+  const closedHeight = useRef(typeof window !== 'undefined' ? window.innerHeight : 800);
 
   // Handle keyboard show - native plugin & listener for Viewport changes
   useEffect(() => {
     let showSub: any = null;
     let hideSub: any = null;
-    let didShowSub: any = null;
-    let didHideSub: any = null;
 
-    const handleShow = (height: number) => {
-      if (height > 0) {
-        setKeyboardHeight(height);
-        scrollToBottom('smooth');
-        setTimeout(() => scrollToBottom('smooth'), 100);
-        setTimeout(() => scrollToBottom('smooth'), 250);
+    const onWindowResize = () => {
+      if (!isKeyboardOpen.current) {
+        closedHeight.current = window.innerHeight;
+        setWindowShrink(0);
+      } else {
+        setWindowShrink(Math.max(0, closedHeight.current - window.innerHeight));
       }
     };
-
-    const handleHide = () => {
-      setKeyboardHeight(0);
-      scrollToBottom('smooth');
-      setTimeout(() => scrollToBottom('smooth'), 100);
-    };
+    window.addEventListener('resize', onWindowResize);
 
     if (Capacitor.isNativePlatform()) {
       showSub = Keyboard.addListener('keyboardWillShow', (info: { keyboardHeight: number }) => {
-        handleShow(info.keyboardHeight || 0);
-      });
-      didShowSub = Keyboard.addListener('keyboardDidShow', (info: { keyboardHeight: number }) => {
-        handleShow(info.keyboardHeight || 0);
+        isKeyboardOpen.current = true;
+        setKeyboardHeight(info.keyboardHeight || 0);
+        scrollToBottom('smooth');
+        setTimeout(() => scrollToBottom('smooth'), 100);
+        setTimeout(() => scrollToBottom('smooth'), 250);
       });
       hideSub = Keyboard.addListener('keyboardWillHide', () => {
-        handleHide();
-      });
-      didHideSub = Keyboard.addListener('keyboardDidHide', () => {
-        handleHide();
+        isKeyboardOpen.current = false;
+        setKeyboardHeight(0);
+        setWindowShrink(0);
+        scrollToBottom('smooth');
+        setTimeout(() => scrollToBottom('smooth'), 100);
       });
     }
 
-    const onResize = () => {
+    const onVPResize = () => {
       if (window.visualViewport) {
         const visibleHeight = window.visualViewport.height;
         const totalHeight = window.innerHeight;
         const diff = totalHeight - visibleHeight;
         if (diff > 100) {
-          handleShow(diff);
+          setKeyboardHeight(diff);
         } else {
-          handleHide();
+          setKeyboardHeight(0);
         }
       }
     };
     
-    window.visualViewport?.addEventListener('resize', onResize);
-    window.visualViewport?.addEventListener('scroll', onResize);
-    window.addEventListener('resize', onResize);
+    if (!Capacitor.isNativePlatform()) {
+      window.visualViewport?.addEventListener('resize', onVPResize);
+    }
 
     return () => {
+      window.removeEventListener('resize', onWindowResize);
+      if (!Capacitor.isNativePlatform()) {
+        window.visualViewport?.removeEventListener('resize', onVPResize);
+      }
       if (showSub) showSub.then((s: any) => s.remove());
       if (hideSub) hideSub.then((s: any) => s.remove());
-      if (didShowSub) didShowSub.then((s: any) => s.remove());
-      if (didHideSub) didHideSub.then((s: any) => s.remove());
-      window.visualViewport?.removeEventListener('resize', onResize);
-      window.visualViewport?.removeEventListener('scroll', onResize);
-      window.removeEventListener('resize', onResize);
     };
   }, [scrollToBottom]);
 
@@ -291,10 +288,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
         : `${petName}'s ${t.owner}`)
     : t.deletedPet;
 
+  const isWeb = Capacitor.getPlatform() === 'web';
+  const effectiveKeyboardHeight = isWeb ? keyboardHeight : Math.max(0, keyboardHeight - windowShrink);
+
   return (
     <div 
       className="flex flex-col h-full bg-gray-50 dark:bg-zinc-950 transition-[padding] duration-200 ease-out"
-      style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : undefined }}
+      style={{ paddingBottom: effectiveKeyboardHeight > 0 ? `${effectiveKeyboardHeight}px` : undefined }}
     >
       {showMenu && (
         <div className="fixed inset-0 z-[45]" onClick={() => setShowMenu(false)} />
@@ -460,7 +460,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
         <div ref={scrollRef} className="h-4 w-full" />
       </div>
 
-      <div className={`p-4 bg-white dark:bg-[#1a1a1a] border-t dark:border-zinc-800 ${keyboardHeight > 0 ? 'pb-3' : 'pb-[calc(1rem+env(safe-area-inset-bottom))]'}`}>
+      <div className={`p-4 bg-white dark:bg-[#1a1a1a] border-t dark:border-zinc-800 ${effectiveKeyboardHeight > 0 ? 'pb-3' : 'pb-[calc(1rem+env(safe-area-inset-bottom))]'}`}>
         {isReportingMode ? (
           <div className="flex items-center gap-3 animate-in slide-in-from-bottom-2">
             <button 
