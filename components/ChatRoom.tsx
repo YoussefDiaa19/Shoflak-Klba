@@ -100,34 +100,69 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
     }
   }, []);
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
   // Handle keyboard show - native plugin & listener for Viewport changes
   useEffect(() => {
     let showSub: any = null;
+    let hideSub: any = null;
     let didShowSub: any = null;
+    let didHideSub: any = null;
 
-    if (Capacitor.isNativePlatform()) {
-      showSub = Keyboard.addListener('keyboardWillShow', () => {
+    const handleShow = (height: number) => {
+      if (height > 0) {
+        setKeyboardHeight(height);
         scrollToBottom('smooth');
         setTimeout(() => scrollToBottom('smooth'), 100);
+        setTimeout(() => scrollToBottom('smooth'), 250);
+      }
+    };
+
+    const handleHide = () => {
+      setKeyboardHeight(0);
+      scrollToBottom('smooth');
+      setTimeout(() => scrollToBottom('smooth'), 100);
+    };
+
+    if (Capacitor.isNativePlatform()) {
+      showSub = Keyboard.addListener('keyboardWillShow', (info: { keyboardHeight: number }) => {
+        handleShow(info.keyboardHeight || 0);
       });
-      didShowSub = Keyboard.addListener('keyboardDidShow', () => {
-        scrollToBottom('smooth');
+      didShowSub = Keyboard.addListener('keyboardDidShow', (info: { keyboardHeight: number }) => {
+        handleShow(info.keyboardHeight || 0);
+      });
+      hideSub = Keyboard.addListener('keyboardWillHide', () => {
+        handleHide();
+      });
+      didHideSub = Keyboard.addListener('keyboardDidHide', () => {
+        handleHide();
       });
     }
 
     const onResize = () => {
-      if (window.visualViewport && window.visualViewport.height < window.innerHeight * 0.8) {
-        scrollToBottom('smooth');
+      if (window.visualViewport) {
+        const visibleHeight = window.visualViewport.height;
+        const totalHeight = window.innerHeight;
+        const diff = totalHeight - visibleHeight;
+        if (diff > 100) {
+          handleShow(diff);
+        } else {
+          handleHide();
+        }
       }
     };
     
     window.visualViewport?.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('scroll', onResize);
     window.addEventListener('resize', onResize);
 
     return () => {
       if (showSub) showSub.then((s: any) => s.remove());
+      if (hideSub) hideSub.then((s: any) => s.remove());
       if (didShowSub) didShowSub.then((s: any) => s.remove());
+      if (didHideSub) didHideSub.then((s: any) => s.remove());
       window.visualViewport?.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('scroll', onResize);
       window.removeEventListener('resize', onResize);
     };
   }, [scrollToBottom]);
@@ -257,7 +292,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
     : t.deletedPet;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-zinc-950">
+    <div 
+      className="flex flex-col h-full bg-gray-50 dark:bg-zinc-950 transition-[padding] duration-200 ease-out"
+      style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : undefined }}
+    >
       {showMenu && (
         <div className="fixed inset-0 z-[45]" onClick={() => setShowMenu(false)} />
       )}
@@ -422,7 +460,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ chat, pet, currentUser, isOn
         <div ref={scrollRef} className="h-4 w-full" />
       </div>
 
-      <div className="p-4 bg-white dark:bg-[#1a1a1a] border-t dark:border-zinc-800 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className={`p-4 bg-white dark:bg-[#1a1a1a] border-t dark:border-zinc-800 ${keyboardHeight > 0 ? 'pb-3' : 'pb-[calc(1rem+env(safe-area-inset-bottom))]'}`}>
         {isReportingMode ? (
           <div className="flex items-center gap-3 animate-in slide-in-from-bottom-2">
             <button 
